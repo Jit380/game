@@ -32,6 +32,8 @@ function line(c, x, y, xx, yy, color, width) {
   c.stroke();
 }
 export function drawFighter(c, id, x, y, scale = 1, pose = {}) {
+  if (["midoriya", "ryuga", "pikachu"].includes(id))
+    return drawNewFighter(c, id, x, y, scale, pose);
   const facing = pose.facing || 1,
     walk = pose.moving ? Math.sin((pose.time || 0) * 16) : 0,
     air = pose.air,
@@ -371,6 +373,11 @@ function mountain(c, x, y, w, h, color) {
 export function drawStage(c, stage, time = 0) {
   c.save();
   const id = stage.id;
+  if (["leaf", "namek", "ring"].includes(id)) {
+    drawNewStage(c, stage, time);
+    c.restore();
+    return;
+  }
   const sky = c.createLinearGradient(0, 0, 0, 720);
   if (id === "temple") {
     sky.addColorStop(0, "#416ec6");
@@ -619,11 +626,38 @@ export function drawArena(c, arena) {
     const tail = p.x - Math.sign(p.vx) * 100;
     const gradient = c.createLinearGradient(tail, p.y, p.x, p.y);
     gradient.addColorStop(0, "#71dfff00");
-    gradient.addColorStop(1, "#71dfff");
+    gradient.addColorStop(1, p.color);
     c.fillStyle = gradient;
     c.fillRect(Math.min(tail, p.x), p.y - 12, 100, 24);
-    oval(c, p.x, p.y, p.r + 4, p.r * 0.8, "#80eaff", false);
+    oval(c, p.x, p.y, p.r + 4, p.r * 0.8, p.color, false);
     oval(c, p.x + Math.sign(p.vx) * 3, p.y, 10, 10, "#f0fdff", false);
+    if (p.kind === "thunder") {
+      for (let i = 0; i < 5; i++)
+        line(
+          c,
+          p.x - Math.sign(p.vx) * i * 18,
+          p.y + (i % 2 ? 12 : -12),
+          p.x - Math.sign(p.vx) * (i + 1) * 18,
+          p.y + (i % 2 ? -12 : 12),
+          "#fff19b",
+          4,
+        );
+    } else if (p.kind === "dragon") {
+      const d = Math.sign(p.vx);
+      shape(
+        c,
+        [
+          [p.x + d * 28, p.y],
+          [p.x + d * 9, p.y - 24],
+          [p.x - d * 22, p.y - 30],
+          [p.x - d * 12, p.y - 10],
+          [p.x - d * 30, p.y + 18],
+          [p.x, p.y + 15],
+        ],
+        p.color,
+      );
+      oval(c, p.x + d * 12, p.y - 7, 4, 3, "#fff4b1", false);
+    }
     c.restore();
   }
   for (const f of arena.fighters) {
@@ -815,5 +849,381 @@ export function drawArena(c, arena) {
     c.strokeText(text, 640, 300);
     c.fillText(text, 640, 300);
     c.restore();
+  }
+}
+
+function drawNewFighter(c, id, x, y, scale, pose) {
+  c.save();
+  c.translate(x, y);
+  c.scale(scale * (pose.facing || 1), scale);
+  const walk = pose.moving ? Math.sin((pose.time || 0) * 16) * 8 : 0;
+  const hit = pose.attack && pose.attack.t > 0.04;
+  const color =
+    id === "midoriya" ? "#29b98b" : id === "ryuga" ? "#ecedef" : "#ffe054";
+  if (id === "pikachu") {
+    shape(
+      c,
+      [
+        [-13, -18],
+        [-28, -28],
+        [-20, -36],
+        [-36, -44],
+        [-29, -51],
+        [-11, -33],
+      ],
+      "#e7ba30",
+    );
+    oval(c, 0, -29, 18, 25, color);
+    oval(c, 0, -55, 20, 17, color);
+    shape(
+      c,
+      [
+        [-15, -63],
+        [-26, -97],
+        [-18, -97],
+        [-5, -65],
+      ],
+      color,
+    );
+    shape(
+      c,
+      [
+        [7, -65],
+        [20, -98],
+        [27, -96],
+        [18, -61],
+      ],
+      color,
+    );
+    shape(
+      c,
+      [
+        [-26, -97],
+        [-18, -97],
+        [-15, -86],
+        [-22, -86],
+      ],
+      "#263247",
+    );
+    shape(
+      c,
+      [
+        [20, -98],
+        [27, -96],
+        [24, -86],
+        [16, -86],
+      ],
+      "#263247",
+    );
+    oval(c, -10, -55, 3, 5, "#172436");
+    oval(c, 10, -55, 3, 5, "#172436");
+    oval(c, -15, -47, 5, 4, "#f65d43");
+    oval(c, 15, -47, 5, 4, "#f65d43");
+    line(c, -2, -43, 2, -43, "#263247", 2);
+    oval(c, 1, -50, 2, 1, "#263247");
+    line(c, -12, -31, -20, -22 - walk / 2, color, 8);
+    line(c, 12, -31, hit ? 34 : 21, hit ? -40 : -22 + walk / 2, color, 8);
+    oval(c, -10 - walk / 2, -5, 8, 5, color);
+    oval(c, 10 + walk / 2, -5, 8, 5, color);
+  } else {
+    const suit = id === "midoriya" ? "#147761" : "#353443";
+    line(c, -6, -23, -9 - walk, -5, "#172436", 12);
+    line(c, 6, -23, 9 + walk, -5, "#172436", 12);
+    line(c, -6, -23, -9 - walk, -6, suit, 8);
+    line(c, 6, -23, 9 + walk, -6, suit, 8);
+    oval(c, -9 - walk, -4, 7, 4, id === "midoriya" ? "#ec594c" : "#a63b4e");
+    oval(c, 9 + walk, -4, 7, 4, id === "midoriya" ? "#ec594c" : "#a63b4e");
+    if (id === "ryuga")
+      shape(
+        c,
+        [
+          [-13, -45],
+          [-24, -25],
+          [-25, -5],
+          [0, -20],
+          [25, -5],
+          [23, -25],
+          [13, -45],
+        ],
+        "#eee9dc",
+      );
+    shape(
+      c,
+      [
+        [-11, -47],
+        [11, -47],
+        [13, -22],
+        [-11, -22],
+      ],
+      suit,
+    );
+    line(c, -12, -26, 12, -26, id === "midoriya" ? "#e45c56" : "#a62d45", 5);
+    line(c, -9, -42, -17, -24 - walk / 2, color, 9);
+    line(c, 9, -42, hit ? 35 : 18, hit ? -38 : -24 + walk / 2, color, 9);
+    oval(c, hit ? 35 : 18, hit ? -38 : -24 + walk / 2, 5, 5, "#ffcc9b");
+    if (id === "ryuga") {
+      const bx = hit ? 36 : 20,
+        by = hit ? -33 : -19 + walk / 2;
+      oval(c, bx, by, 7, 3, "#8fa1d0");
+      oval(c, bx, by - 3, 8, 3, "#e65b66");
+      oval(c, bx, by - 5, 3, 2, "#f4db73");
+    }
+    oval(c, 0, -59, 12, 13, "#ffcc9b");
+    shape(
+      c,
+      [
+        [-12, -54],
+        [-17, -67],
+        [-12, -68],
+        [-15, -78],
+        [-5, -73],
+        [0, -83],
+        [7, -75],
+        [16, -79],
+        [14, -69],
+        [20, -66],
+        [10, -56],
+        [6, -66],
+        [0, -62],
+        [-5, -66],
+      ],
+      id === "midoriya" ? "#165443" : "#eaf2f5",
+    );
+    if (id === "ryuga") {
+      shape(
+        c,
+        [
+          [4, -77],
+          [10, -74],
+          [10, -59],
+          [5, -61],
+        ],
+        "#ce414a",
+      );
+      line(c, -12, -66, 12, -66, "#b5424d", 3);
+      oval(c, 0, -67, 3, 3, "#e6bc53");
+    } else {
+      line(c, -9, -44, 9, -44, "#d4e5d9", 5);
+      line(c, -6, -42, -6, -35, "#242d38", 2);
+      line(c, 6, -42, 6, -35, "#242d38", 2);
+    }
+    oval(c, -5, -58, 3, 3, "#fff");
+    oval(c, 6, -58, 3, 3, "#fff");
+    oval(c, -4, -58, 1.5, 2, "#163743");
+    oval(c, 7, -58, 1.5, 2, "#163743");
+    line(c, -3, -50, 4, -50, "#804e47", 1.5);
+    if (id === "midoriya")
+      for (const xx of [-8, -5, 7, 10])
+        oval(c, xx, -53, 0.7, 0.7, "#915840", false);
+  }
+  if (hit || pose.attack?.kind === "beam") {
+    c.shadowBlur = 15;
+    c.shadowColor =
+      id === "pikachu" ? "#ffe35d" : id === "midoriya" ? "#49e7a2" : "#d796ff";
+    const glow = c.shadowColor;
+    if (id === "midoriya" && pose.attack?.kind === "smash") {
+      c.strokeStyle = glow;
+      c.lineWidth = 5;
+      c.beginPath();
+      c.ellipse(72, -35, 50, 24, 0, -1.6, 1.6);
+      c.stroke();
+    }
+    if (id === "ryuga") {
+      oval(c, 32, -37, 14, 14, glow, false);
+      line(c, 21, -38, 43, -38, "#fff", 2);
+    } else
+      for (let i = 0; i < 4; i++) {
+        const xx = 24 + i * 8;
+        line(c, xx, -42 + (i % 2) * 14, xx + 8, -28 - (i % 2) * 14, glow, 3);
+      }
+  }
+  c.restore();
+}
+function drawNewStage(c, stage, time) {
+  const id = stage.id,
+    sky = c.createLinearGradient(0, 0, 0, 720);
+  sky.addColorStop(
+    0,
+    id === "leaf" ? "#539ccb" : id === "namek" ? "#268e7e" : "#111629",
+  );
+  sky.addColorStop(
+    1,
+    id === "leaf" ? "#f2d9af" : id === "namek" ? "#b8eca1" : "#463851",
+  );
+  c.fillStyle = sky;
+  c.fillRect(0, 0, 1280, 720);
+  if (id === "leaf") {
+    mountain(c, 640, 450, 1250, 320, "#b59376");
+    for (let i = 0; i < 5; i++) {
+      oval(c, 380 + i * 120, 270 - (i % 2) * 18, 40, 55, "#ceb299");
+      const fx = 380 + i * 120,
+        fy = 270 - (i % 2) * 18;
+      shape(
+        c,
+        [
+          [fx - 35, fy - 26],
+          [fx - 36, fy - 45],
+          [fx - 14, fy - 62],
+          [fx + 16, fy - 60],
+          [fx + 37, fy - 38],
+          [fx + 36, fy - 23],
+          [fx + 19, fy - 33],
+          [fx, fy - 30],
+          [fx - 18, fy - 35],
+        ],
+        i % 2 ? "#a3856f" : "#b39a81",
+      );
+      for (const ex of [fx - 15, fx + 15]) {
+        line(c, ex - 7, fy - 8, ex + 7, fy - 9, "#8c725f", 3);
+        line(c, ex - 7, fy - 1, ex + 7, fy - 1, "#ad9077", 2);
+      }
+      line(c, fx, fy - 4, fx - 4, fy + 13, "#a3856d", 2);
+      line(c, fx - 4, fy + 13, fx + 6, fy + 13, "#aa8b70", 2);
+      line(c, fx - 14, fy + 29, fx, fy + 34, "#b0957b", 3);
+      line(c, fx, fy + 34, fx + 17, fy + 27, "#b0957b", 3);
+      if (i === 0) line(c, fx - 27, fy - 21, fx + 28, fy - 21, "#b49a83", 6);
+      if (i === 2)
+        shape(
+          c,
+          [
+            [fx - 18, fy - 52],
+            [fx + 19, fy - 52],
+            [fx + 30, fy - 29],
+            [fx - 29, fy - 29],
+          ],
+          "#bc9b7b",
+        );
+      if (i === 3)
+        for (const dx of [-28, -17, 19, 29])
+          line(
+            c,
+            fx + dx,
+            fy + 3,
+            fx + dx + (dx > 0 ? 8 : -8),
+            fy + 21,
+            "#a58a72",
+            2,
+          );
+
+      line(
+        c,
+        363 + i * 120,
+        263 - (i % 2) * 18,
+        390 + i * 120,
+        263 - (i % 2) * 18,
+        "#9e816d",
+        4,
+      );
+      line(
+        c,
+        374 + i * 120,
+        288 - (i % 2) * 18,
+        388 + i * 120,
+        288 - (i % 2) * 18,
+        "#9e816d",
+        3,
+      );
+    }
+    for (let i = 0; i < 14; i++) {
+      const x = i * 100,
+        y = 370 + (i % 3) * 30;
+      c.fillStyle = i % 2 ? "#eac8a0" : "#cfb991";
+      c.fillRect(x, y, 90, 150);
+      shape(
+        c,
+        [
+          [x - 10, y],
+          [x + 45, y - 35],
+          [x + 100, y],
+        ],
+        i % 2 ? "#b46050" : "#507776",
+      );
+      for (let j = 0; j < 3; j++) {
+        c.fillStyle = "#516c75";
+        c.fillRect(x + 14 + j * 24, y + 20, 12, 20);
+      }
+    }
+    for (let i = 0; i < 5; i++)
+      cloud(c, i * 290 + ((time * 4) % 290), 100 + (i % 2) * 60, 0.7, 0.6);
+  } else if (id === "namek") {
+    oval(c, 970, 120, 65, 65, "#e4f6a7", false);
+    oval(c, 170, 160, 25, 25, "#b9e9cc", false);
+    c.fillStyle = "#478dc3";
+    c.fillRect(0, 420, 1280, 300);
+    for (let i = 0; i < 9; i++) {
+      const x = i * 157;
+      shape(
+        c,
+        [
+          [x - 50, 480],
+          [x - 30, 360 - (i % 3) * 40],
+          [x + 35, 355 - (i % 3) * 40],
+          [x + 60, 480],
+        ],
+        "#63aa70",
+      );
+      line(c, x, 370 - (i % 3) * 40, x, 290 - (i % 3) * 40, "#3d7572", 7);
+      oval(c, x, 273 - (i % 3) * 40, 37, 21, "#a7d976");
+    }
+    for (let y = 450; y < 720; y += 24) line(c, 0, y, 1280, y, "#9ee6ca44", 2);
+  } else {
+    for (let i = 0; i < 85; i++) {
+      oval(
+        c,
+        (i * 151) % 1280,
+        330 + (i % 5) * 25,
+        8,
+        8,
+        i % 2 ? "#786580" : "#665a73",
+        false,
+      );
+    }
+    for (const x of [160, 1120]) {
+      const g = c.createLinearGradient(x, 60, 640, 480);
+      g.addColorStop(0, "#fff5d633");
+      g.addColorStop(1, "#fff0");
+      shape(
+        c,
+        [
+          [x - 20, 60],
+          [x + 20, 60],
+          [950, 490],
+          [330, 490],
+        ],
+        g,
+        null,
+      );
+    }
+    c.fillStyle = "#dfca91";
+    c.font = "bold 42px sans-serif";
+    c.textAlign = "center";
+    c.fillText("ANIME BRAWL • MAIN EVENT", 640, 180);
+    const p = stage.platforms[0];
+    for (const x of [p.x, p.x + p.w])
+      line(c, x, p.y, x, p.y - 125, "#cfb596", 10);
+    for (let j = 0; j < 3; j++)
+      line(
+        c,
+        p.x,
+        p.y - 35 - j * 34,
+        p.x + p.w,
+        p.y - 35 - j * 34,
+        j % 2 ? "#cfe8ef" : "#df646c",
+        3,
+      );
+  }
+  for (const p of stage.platforms) {
+    c.fillStyle =
+      id === "ring" ? "#343c60" : id === "leaf" ? "#8d5f50" : "#548674";
+    c.fillRect(p.x, p.y, p.w, p.h);
+    c.fillStyle =
+      id === "ring" ? "#c7d6e9" : id === "leaf" ? "#cb8267" : "#b3dd79";
+    c.fillRect(p.x, p.y, p.w, 10);
+    if (p.main && id === "ring") {
+      c.fillStyle = "#c69147";
+      c.font = "bold 32px sans-serif";
+      c.textAlign = "center";
+      c.fillText("BRAWL", 640, p.y + 44);
+    }
   }
 }

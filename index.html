@@ -26,7 +26,8 @@
             <h1>Small stage.<br /><em>Big main-character energy.</em></h1>
           </div>
           <p>
-            Three anime icons. Three stocks.<br />One very satisfying fight.
+            Six fighters. Six stages. Three stocks.<br />One very satisfying
+            fight.
           </p>
         </div>
         <div class="select-top">
@@ -74,6 +75,8 @@
             ><select id="mode">
               <option value="cpu">VS. CPU</option>
               <option value="local">LOCAL 2 PLAYER</option>
+              <option value="online">ONLINE 2 PLAYER</option>
+              <option value="tournament">CHAMPIONSHIP VS CPU</option>
             </select>
           </div>
           <div>
@@ -101,6 +104,38 @@
             </div>
           </div>
         </div>
+        <section id="online-settings" hidden aria-label="Online room settings">
+          <h2>PLAY WITH A FRIEND</h2>
+          <p>
+            Pick your fighter, then create a room or enter your friend’s code.
+            Both players use A/D, W/Space, J/K/L and Left Shift on their own
+            keyboard. The host chooses the stage.
+          </p>
+          <div class="room-actions">
+            <button id="create-room">CREATE ROOM</button
+            ><input
+              id="room-code"
+              maxlength="6"
+              placeholder="6-CHARACTER CODE"
+              aria-label="Room code"
+              autocomplete="off"
+            /><button id="join-room">JOIN ROOM</button
+            ><button id="leave-room" hidden>LEAVE ROOM</button>
+          </div>
+          <p id="room-status" role="status" aria-live="polite"></p>
+          <p>
+            Separate computers must open the same server address. On the same
+            Wi-Fi, use the host computer’s LAN IP and port 3000. Internet play
+            needs a publicly hosted server that supports WebSockets.
+          </p>
+        </section>
+        <section id="tournament-info" hidden>
+          <h2>EIGHT ENTRANTS. ONE CHAMPION.</h2>
+          <p>
+            Win your quarterfinal, semifinal and final. Other bracket matches
+            are simulated. CPU difficulty follows your selected level.
+          </p>
+        </section>
         <div class="bottom-row">
           <div class="controls-hint">
             <strong>LEARN IT IN ONE ROUND.</strong>

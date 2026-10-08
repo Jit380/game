@@ -149,4 +149,60 @@ test("CPU actively pursues and attacks a nearby opponent", async () => {
   assert.ok(a.fighters[0].damage > 0);
 });
 
-test('CPU turns to face a close opponent after crossing sides',async()=>{const a=await arena({mode:'cpu'});const [human,cpu]=a.fighters;human.x=600;cpu.x=550;cpu.facing=-1;step(a,70);assert.ok(human.damage>0);});
+test("CPU turns to face a close opponent after crossing sides", async () => {
+  const a = await arena({ mode: "cpu" });
+  const [human, cpu] = a.fighters;
+  human.x = 600;
+  cpu.x = 550;
+  cpu.facing = -1;
+  step(a, 70);
+  assert.ok(human.damage > 0);
+});
+test("new fighters have distinct Smash, dragon and electric specials", async () => {
+  const m = await arena({ p1: "midoriya" });
+  m.startSpecial(m.fighters[0], {});
+  assert.equal(m.fighters[0].attack.kind, "smash");
+  assert.equal(m.fighters[0].attack.damage, 19);
+  const projectiles = [];
+  for (const id of ["ryuga", "pikachu"]) {
+    const a = await arena({ p1: id, p2: "naruto" });
+    a.fighters[1].x = 1000;
+    a.startSpecial(a.fighters[0], {});
+    step(a, id === "pikachu" ? 15 : 32);
+    assert.equal(a.projectiles.length, 1);
+    projectiles.push(a.projectiles[0]);
+  }
+  assert.equal(projectiles[0].kind, "dragon");
+  assert.equal(projectiles[1].kind, "thunder");
+  assert.ok(projectiles[0].damage > projectiles[1].damage);
+  assert.ok(projectiles[1].vx > projectiles[0].vx);
+});
+test("all six stages support playable grounded starts", async () => {
+  const { STAGES } = await import("../engine.mjs");
+  assert.equal(STAGES.length, 6);
+  for (const stage of STAGES) {
+    const a = await arena({ stage: stage.id, p1: "pikachu", p2: "ryuga" });
+    step(a, 120);
+    assert.ok(a.fighters.every((f) => f.grounded && f.stocks === 3));
+  }
+});
+test("championship advances three rounds, records bracket and supports elimination", async () => {
+  const { Tournament } = await import("../tournament.mjs");
+  const t = new Tournament("midoriya", () => 0.4);
+  assert.equal(t.entries.length, 8);
+  assert.ok(t.opponent);
+  assert.equal(t.label, "QUARTERFINAL");
+  t.advance(true);
+  assert.equal(t.label, "SEMIFINAL");
+  assert.equal(t.entries.length, 4);
+  t.advance(true);
+  assert.equal(t.label, "FINAL");
+  t.advance(true);
+  assert.equal(t.champion, "midoriya");
+  assert.equal(t.history.length, 7);
+  assert.equal(t.finished, true);
+  const loss = new Tournament("pikachu");
+  loss.advance(false);
+  assert.equal(loss.finished, true);
+  assert.equal(loss.champion, null);
+});

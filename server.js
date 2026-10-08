@@ -7,6 +7,7 @@ const files = {
   "/game.js": "game.js",
   "/engine.mjs": "engine.mjs",
   "/art.js": "art.js",
+  "/tournament.mjs": "tournament.mjs",
   "/style.css": "style.css",
   "/assets/fonts/barlow-condensed.ttf": "assets/fonts/barlow-condensed.ttf",
   "/assets/fonts/dm-sans.ttf": "assets/fonts/dm-sans.ttf",
@@ -36,6 +37,7 @@ const server = http.createServer((req, res) => {
     res.end(data);
   });
 });
+server.multiplayer = require("./multiplayer.cjs")(server);
 if (require.main === module) {
   server.on("error", (err) => {
     console.error(

@@ -664,3 +664,65 @@ footer b {
 .card-name > span {
   font-family: system-ui, sans-serif;
 }
+/* Expanded roster and multiplayer rooms. */
+.roster {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.stages {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#online-settings,
+#tournament-info {
+  background: #16242b;
+  border: 1px solid #34524e;
+  padding: 24px;
+  margin: 22px 0;
+  border-radius: 8px;
+}
+#online-settings p,
+#tournament-info p {
+  color: #bfd0d7;
+  line-height: 1.6;
+}
+.room-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.room-actions button {
+  padding: 14px 18px;
+  background: #75e5bb;
+  color: #14252a;
+  font-weight: 800;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.room-actions input {
+  background: #0e1922;
+  border: 1px solid #526d73;
+  color: white;
+  padding: 12px;
+  font: inherit;
+  width: 210px;
+  text-transform: uppercase;
+}
+#room-status {
+  color: #75e5bb !important;
+  font-weight: 700;
+  min-height: 25px;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+@media (max-width: 650px) {
+  .roster {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .room-actions > * {
+    flex: 1;
+    min-width: 150px;
+  }
+}

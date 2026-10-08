@@ -1,5 +1,38 @@
 export const ROSTER = [
   {
+    id: "midoriya",
+    name: "Midoriya",
+    title: "THE HERO",
+    color: "#49e7a2",
+    secondary: "#164e43",
+    speed: 365,
+    weight: 1.02,
+    special: "Delaware Smash",
+    tag: "Mobility · explosive air pressure",
+  },
+  {
+    id: "ryuga",
+    name: "Ryuga",
+    title: "THE DRAGON EMPEROR",
+    color: "#d796ff",
+    secondary: "#922838",
+    speed: 320,
+    weight: 1.12,
+    special: "L-Drago Rush",
+    tag: "Power · dragon projectile",
+  },
+  {
+    id: "pikachu",
+    name: "Pikachu",
+    title: "THE ELECTRIC ACE",
+    color: "#ffe35d",
+    secondary: "#b18525",
+    speed: 395,
+    weight: 0.82,
+    special: "Thunderbolt",
+    tag: "Speed · electric zoning",
+  },
+  {
     id: "naruto",
     name: "Naruto",
     title: "THE SHINOBI",
@@ -35,6 +68,33 @@ export const ROSTER = [
 ];
 export const STAGES = [
   {
+    id: "leaf",
+    name: "Hidden Leaf Village",
+    subtitle: "Rooftop battles beneath the Hokage monument.",
+    platforms: [
+      { x: 220, y: 510, w: 840, h: 55, main: true },
+      { x: 330, y: 345, w: 185, h: 18 },
+      { x: 765, y: 345, w: 185, h: 18 },
+      { x: 560, y: 230, w: 160, h: 18 },
+    ],
+  },
+  {
+    id: "namek",
+    name: "Namek",
+    subtitle: "Alien skies. Island platforms. Saiyan-sized fights.",
+    platforms: [
+      { x: 245, y: 515, w: 790, h: 60, main: true },
+      { x: 300, y: 355, w: 190, h: 18 },
+      { x: 790, y: 310, w: 190, h: 18 },
+    ],
+  },
+  {
+    id: "ring",
+    name: "Boxing Ring",
+    subtitle: "A flat stage for the ultimate grudge match.",
+    platforms: [{ x: 210, y: 505, w: 860, h: 65, main: true }],
+  },
+  {
     id: "temple",
     name: "Sky Temple",
     subtitle: "Three platforms. Endless possibilities.",
@@ -65,7 +125,9 @@ export const STAGES = [
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 export class Fighter {
   constructor(character, slot) {
-    this.character = ROSTER.find((r) => r.id === character) || ROSTER[slot];
+    this.character =
+      ROSTER.find((r) => r.id === character) ||
+      ROSTER.find((r) => r.id === (slot === 0 ? "naruto" : "goku"));
     this.slot = slot;
     this.w = 38;
     this.h = 66;
@@ -200,7 +262,7 @@ export class Arena {
       main = this.stage.platforms[0];
     let input = {};
     const off = f.cx < main.x + 8 || f.cx > main.x + main.w - 8;
-    if(!off && !f.attack && Math.abs(dx)>5)f.facing=Math.sign(dx);
+    if (!off && !f.attack && Math.abs(dx) > 5) f.facing = Math.sign(dx);
     if (off && f.y > main.y - 120) {
       input.left = f.cx > 640;
       input.right = f.cx < 640;
@@ -269,20 +331,24 @@ export class Arena {
     } else f.guard = Math.min(100, f.guard + 20 * dt);
     if (f.attack) {
       f.attack.t += dt;
-      if (f.attack.kind === "beam" && !f.attack.fired && f.attack.t > 0.43) {
+      if (
+        f.attack.kind === "beam" &&
+        !f.attack.fired &&
+        f.attack.t > (f.attack.charge || 0.43)
+      ) {
         f.attack.fired = true;
         this.projectiles.push({
           x: f.cx + f.facing * 30,
           y: f.cy - 7,
-          vx: f.facing * 950,
+          vx: f.facing * (f.attack.projectileSpeed || 950),
           owner: f.slot,
           life: 1.25,
-          r: 18,
-          damage: 17,
-          color: "#62ddff",
-          kind: "beam",
+          r: f.attack.projectileRadius || 18,
+          damage: f.attack.projectileDamage || 17,
+          color: f.attack.color || "#62ddff",
+          kind: f.attack.projectileKind || "beam",
         });
-        this.event("special", { character: "goku" });
+        this.event("special", { character: f.character.id });
       }
       if (
         f.attack.kind === "rasengan" &&
@@ -414,24 +480,70 @@ export class Arena {
     }
     f.energy -= 24;
     f.cool = 1.05;
-    if (f.character.id === "goku")
+    if (["goku", "ryuga", "pikachu"].includes(f.character.id))
       f.attack = {
         kind: "beam",
         t: 0,
         duration: 0.72,
+        color: f.character.id === "goku" ? "#62ddff" : f.character.color,
+        charge:
+          f.character.id === "pikachu"
+            ? 0.18
+            : f.character.id === "ryuga"
+              ? 0.5
+              : 0.43,
+        projectileSpeed:
+          f.character.id === "pikachu"
+            ? 1300
+            : f.character.id === "ryuga"
+              ? 700
+              : 950,
+        projectileRadius:
+          f.character.id === "ryuga"
+            ? 24
+            : f.character.id === "pikachu"
+              ? 12
+              : 18,
+        projectileDamage:
+          f.character.id === "ryuga"
+            ? 20
+            : f.character.id === "pikachu"
+              ? 12
+              : 17,
+        projectileKind:
+          f.character.id === "ryuga"
+            ? "dragon"
+            : f.character.id === "pikachu"
+              ? "thunder"
+              : "beam",
         hit: new Set(),
         damage: 0,
       };
     else
       f.attack = {
-        kind: f.character.id === "luffy" ? "stretch" : "rasengan",
+        kind:
+          f.character.id === "luffy"
+            ? "stretch"
+            : f.character.id === "midoriya"
+              ? "smash"
+              : "rasengan",
         t: 0,
         duration: f.character.id === "luffy" ? 0.48 : 0.4,
         start: f.character.id === "luffy" ? 0.16 : 0.1,
         end: f.character.id === "luffy" ? 0.34 : 0.35,
         hit: new Set(),
-        range: f.character.id === "luffy" ? 235 : 86,
-        damage: f.character.id === "luffy" ? 17 : 14,
+        range:
+          f.character.id === "luffy"
+            ? 235
+            : f.character.id === "midoriya"
+              ? 145
+              : 86,
+        damage:
+          f.character.id === "luffy"
+            ? 17
+            : f.character.id === "midoriya"
+              ? 19
+              : 14,
         finisher: true,
       };
     this.event("special", { character: f.character.id });
