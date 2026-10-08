@@ -14,7 +14,10 @@ let arena = null,
   last = performance.now(),
   beat = 0,
   resultShown = false;
-let story;
+let story, adventure;
+export function getAdventure() {
+  return adventure;
+}
 export function getStory() {
   return story;
 }
@@ -331,6 +334,7 @@ export function startMatch(options = {}) {
   drawArena(ctx, arena);
 }
 export function returnToSelect() {
+  if (adventure?.active) adventure.exit();
   if (story?.active) story.exit();
   disconnectOnline();
   tournament = null;
@@ -493,6 +497,42 @@ story = createStory({
     $("#lobby").hidden = false;
   },
 });
+$("#adventure-start").onclick = async () => {
+  const button = $("#adventure-start");
+  button.disabled = true;
+  $("#adventure-error").hidden = true;
+  try {
+    openAudio();
+    disconnectOnline();
+    arena = null;
+    tournament = null;
+    if (story.active) story.exit();
+    if (!adventure) {
+      const { createAdventure } = await import("/adventure/client.js");
+      adventure = createAdventure({
+        sound,
+        onExit: () => {
+          $("#lobby").hidden = false;
+        },
+      });
+    }
+    $("#lobby").hidden = true;
+    $("#match").hidden = true;
+    adventure.start();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (error) {
+    if (adventure?.active) adventure.exit();
+    $("#lobby").hidden = false;
+    $("#adventure").hidden = true;
+    $("#adventure-error").hidden = false;
+    $("#adventure-error").textContent =
+      "The 3D adventure could not start: " +
+      error.message +
+      " Enable browser hardware acceleration and use a browser with WebGL 2.";
+  } finally {
+    button.disabled = false;
+  }
+};
 $("#story-start").onclick = () => {
   openAudio();
   disconnectOnline();
@@ -510,6 +550,7 @@ function frame(now) {
   const dt = Math.min(0.15, (now - last) / 1000);
   last = now;
   if (story?.active) story.tick(dt);
+  if (adventure?.active) adventure.tick(dt);
   if (arena) {
     if (arena.mode !== "online") {
       accumulator += dt;

@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test test/*.test.js",
-    "test:browser": "node scripts/browser-smoke.cjs && node scripts/expansion-smoke.cjs && node scripts/story-smoke.cjs"
+    "test:browser": "node scripts/browser-smoke.cjs && node scripts/expansion-smoke.cjs && node scripts/story-smoke.cjs && node scripts/adventure-smoke.cjs"
   },
   "engines": {
     "node": ">=20"
@@ -14,6 +14,7 @@
     "playwright": "1.64.0"
   },
   "dependencies": {
+    "three": "0.170.0",
     "ws": "^8.18.3"
   }
 }

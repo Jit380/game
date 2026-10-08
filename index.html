@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Anime Brawl — Platform Fighter</title>
+    <title>Anime Brawl — Worlds Collide</title>
+    <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
@@ -13,7 +14,7 @@
           >ANIME<span>BRAWL<i>✦</i></span></a
         >
         <div class="edition">
-          A FAN-MADE PLATFORM FIGHTER <b>2D / BROWSER EDITION</b>
+          ANIME WORLDS. YOUR ADVENTURE. <b>3D STORY / 2D ARENA</b>
         </div>
         <button id="audio" class="utility" aria-label="Toggle audio">
           SOUND ON
@@ -32,7 +33,7 @@
         </div>
         <section class="story-banner" aria-label="Story adventure">
           <div>
-            <span class="eyebrow">NEW · A STORY ADVENTURE</span>
+            <span class="eyebrow">NEW · OPEN WORLD IN 3D</span>
             <h2>WORLDS <em>COLLIDE.</em></h2>
             <p>
               Explore the Hidden Leaf. Cross the green skies of Namek.<br />Face
@@ -42,7 +43,10 @@
           <div class="story-banner-art" aria-hidden="true">
             <canvas id="story-hero-art" width="460" height="260"></canvas>
           </div>
-          <button id="story-start">ENTER STORY MODE <span>→</span></button>
+          <div class="story-launch">
+            <button id="adventure-start">ENTER 3D STORY <span>→</span></button
+            ><button id="story-start" class="utility">2D SIDE STORY</button>
+          </div>
         </section>
         <div class="select-top">
           <h2>CHOOSE YOUR FIGHTER</h2>
@@ -262,6 +266,73 @@
           <button id="story-new" class="utility">NEW STORY</button>
         </div>
       </section>
+      <section id="adventure" hidden>
+        <div class="match-top">
+          <button id="adventure-exit" class="utility">← SAVE & EXIT</button
+          ><span id="adventure-location">WORLDS COLLIDE · 3D</span>
+          <div>
+            <button id="adventure-map" class="utility">WORLD MAP · M</button>
+            <button id="adventure-pause" class="utility">PAUSE · ESC</button>
+          </div>
+        </div>
+        <div id="adventure-viewport">
+          <canvas
+            id="adventure-canvas"
+            aria-label="Third-person 3D open-world story adventure"
+          ></canvas>
+          <div class="adventure-hud">
+            <div class="quest-panel">
+              <small id="adventure-chapter">A SKY BETWEEN WORLDS</small
+              ><strong id="adventure-objective">Explore the village</strong
+              ><span id="adventure-hint">WASD move · E interact</span>
+            </div>
+            <div class="adventure-vitals">
+              <strong id="adventure-hero">NARUTO</strong>
+              <div><i id="adventure-hp"></i></div>
+              <div class="energy"><i id="adventure-energy"></i></div>
+              <span id="adventure-fragments">0 FRAGMENTS</span>
+            </div>
+          </div>
+          <div id="adventure-boss" hidden>
+            <small id="adventure-boss-phase">RIVAL ENCOUNTER</small
+            ><strong id="adventure-boss-name"></strong>
+            <div><i id="adventure-boss-hp"></i></div>
+            <span id="adventure-warning"></span>
+          </div>
+          <div id="adventure-toast" hidden role="status"></div>
+          <div class="adventure-compass">
+            <span id="adventure-compass">N</span
+            ><b id="adventure-rift">RIFTBREAK 0%</b
+            ><button id="adventure-look">MOUSE LOOK</button>
+          </div>
+          <div id="adventure-overlay" hidden>
+            <div class="adventure-dialog">
+              <small id="adventure-caption"></small>
+              <h2 id="adventure-title"></h2>
+              <p id="adventure-detail"></p>
+              <div id="adventure-actions"></div>
+            </div>
+          </div>
+        </div>
+        <div class="adventure-touch">
+          <button data-adventure-touch="left">◀</button
+          ><button data-adventure-touch="forward">▲</button
+          ><button data-adventure-touch="backward">▼</button
+          ><button data-adventure-touch="right">▶</button
+          ><button data-adventure-touch="jump">JUMP</button
+          ><button data-adventure-touch="interact">TALK</button
+          ><button data-adventure-touch="attack">HIT</button
+          ><button data-adventure-touch="special">SPECIAL</button
+          ><button data-adventure-touch="guard">GUARD</button
+          ><button data-adventure-touch="rift">RIFT</button>
+        </div>
+        <p class="adventure-controls">
+          WASD MOVE · SPACE DOUBLE JUMP / HOLD TO CLIMB · SHIFT SPRINT / EVADE ·
+          E INTERACT · J / CLICK ATTACK · K SPECIAL · L GUARD · R RIFTBREAK<br />DRAG
+          MOUSE / TOUCH TO ORBIT · WHEEL ZOOM · M MAP · ESC PAUSE
+        </p>
+      </section>
+      <p id="adventure-error" hidden role="alert"></p>
       <div id="load-error" hidden role="alert"></div>
       <footer>
         <span>ANIME BRAWL <b>✦</b> WORLDS COLLIDE UPDATE</span

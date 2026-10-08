@@ -1,6 +1,6 @@
 # Anime Brawl
 
-A fresh **2D browser platform fighter** inspired by Super Smash Flash 2. Play as Naruto, Luffy, Goku, Midoriya, Ryuga, or Pikachu in a three-stock match against the CPU, a friend on the same keyboard, or a friend in another browser. Take on an eight-entrant CPU championship or enter **Worlds Collide**, a four-chapter story adventure. Character art is drawn specifically for this project; the game uses no ripped sprites or external runtime assets.
+An anime browser game with a **3D third-person story adventure** and a **2D platform fighter** inspired by Super Smash Flash 2. Explore Naruto’s village and Goku’s Namek in Worlds Collide, or play Naruto, Luffy, Goku, Midoriya, Ryuga, and Pikachu in versus, online 1v1, or a CPU championship. Character models and drawings are made for this project; there are no ripped sprites or remote runtime assets.
 
 ## Play
 
@@ -11,7 +11,36 @@ npm ci
 npm start
 ```
 
-Open **http://localhost:3000**, choose your fighter, opponent, stage, and mode, then enter the arena. If an old game server is running, stop it with Ctrl+C before starting this one. This replaces the earlier 3D and Windows builds; their source remains in Git history.
+Open **http://localhost:3000** and press **ENTER 3D STORY** to explore the new adventure. The fighter selection below starts the 2D arena modes; **2D SIDE STORY** opens the earlier campaign. If an old game server is running, stop it with Ctrl+C before starting this one. To update an existing checkout, run `git pull` and `npm ci`, restart `npm start`, then refresh your browser.
+
+The 3D mode requires WebGL 2. Enable hardware acceleration in your browser if it cannot start; the menu displays the startup error. Chrome, Edge, and Firefox with a working graphics driver are suitable. The 2D modes remain available on browsers without WebGL 2.
+
+## Worlds Collide: 3D story
+
+Walk through a full 3D Leaf Village with shops, trees, rooftops, a lookout tower, and the carved mountain monument. Travel through the world gate to Namek’s islands, dome houses, alien trees, and wreckage. Naruto explores the village; Goku explores Namek. Each region has free movement across both horizontal axes, solid buildings, reachable roofs, roaming rift echoes, guides, fragments, and a camp. The third-person camera follows the hero and can orbit or zoom.
+
+An original four-chapter crossover follows **Sasuke → Pain → Frieza → Broly**. Approach a rival and press E to begin the conversation and fight directly in the exploration world. Namek unlocks after Pain. Rivals telegraph attacks with red danger zones, change tactics in phase two, and leave a short opening after striking. Broly combines both worlds’ instability in the final encounter.
+
+| 3D action                           | Controls                                      |
+| ----------------------------------- | --------------------------------------------- |
+| Move relative to the camera         | WASD / arrow keys                             |
+| Jump / double jump                  | Space                                         |
+| Climb against a wall                | Hold Space while moving into it; costs energy |
+| Sprint / evade                      | Hold Shift / press Shift                      |
+| Three-hit melee combo               | J or click the world                          |
+| Rasengan / Kamehameha               | K; costs energy                               |
+| Guard                               | Hold L; costs energy                          |
+| Talk, start a fight, rest, use gate | E nearby                                      |
+| Riftbreak ally assist               | R at 100% resonance                           |
+| Orbit / zoom camera                 | Drag / mouse wheel                            |
+| Optional mouse look                 | MOUSE LOOK button; Escape releases it         |
+| World atlas / pause                 | M / Escape                                    |
+
+Jump over low shockwaves, evade marked areas, and counter while **OPENING · STRIKE NOW** appears. Guarding reduces damage but consumes energy and prevents attacking. Riftbreak charges through combat, calls the other hero, interrupts a warning, and deals a heavy hit. Camps restore health and energy and sell three levels of Power, Vitality, and Energy, costing 3, 5, and 7 fragments. Roaming echoes grant one fragment each; story victories grant five. Defeat returns you to camp with earned progress preserved.
+
+Chapters, region, fragments, echoes, upgrades, and the seen prologue save automatically in this browser. Save & Exit also records progress. Reloading starts at the saved region’s camp; health and exact position are not saved. The 3D campaign has its own save slot, separate from the 2D story. Saves do not sync between devices or different hostnames/ports. Touch controls are available, though a desktop keyboard and mouse offer the full control set. The 3D story is single-player; multiplayer is available in the 2D arena.
+
+This is a compact two-region adventure with stylized original models. The browser test checks actual WebGL pixels, movement, jumping, combat inputs, fragments, upgrades, travel, saved progress, and the ending. It reduces boss health to finish transition checks quickly; simulation tests separately verify hazards, phases, combat rules, and progression.
 
 ## Controls
 
@@ -46,7 +75,7 @@ Hidden Leaf Village has rooftop platforms beneath a carved mountain monument. Na
 
 ## Development and tests
 
-The versus simulation lives in `engine.mjs`, drawings in `art.js`, browser flow/input in `game.js`, and the HTTP server in `server.js`. Story simulation and saves are in `story.mjs`, presentation in `story-ui.js` / `story-art.js`, and rival drawings in `villains.js`. No bundler or build step is needed. The runtime uses `ws` for WebSockets; Playwright is a development dependency. `multiplayer.cjs` runs authoritative room matches, and `tournament.mjs` manages the elimination bracket.
+The versus simulation lives in `engine.mjs`, drawings in `art.js`, browser flow/input in `game.js`, and the HTTP server in `server.js`. The 3D mode lives in `adventure/`: `core.mjs` handles simulation and saves, `client.js` handles camera and browser flow, `world.js` builds the regions, and `characters.js` builds articulated models. The 2D story uses `story.mjs`, `story-ui.js`, `story-art.js`, and `villains.js`. No bundler or build step is needed. Three.js 0.170.0 is served locally from its installed package; `ws` handles WebSockets, and Playwright is a development dependency. `multiplayer.cjs` runs authoritative room matches, and `tournament.mjs` manages the elimination bracket.
 
 ```sh
 npm test
@@ -77,9 +106,9 @@ Select **CHAMPIONSHIP VS CPU** and a CPU level, fighter, and stage. Your fighter
 
 The expanded tests cover new specials, all six stage starts, bracket wins and elimination, room validation, shared state, player input ownership, rematch consent, and disconnect cleanup. A two-browser smoke test exercises the online room UI and both player screens.
 
-## Worlds Collide: story adventure
+## Worlds Collide: 2D side story
 
-Press **ENTER STORY MODE** in the main menu. This original fan-made crossover follows Naruto and Goku as a fracture pulls their worlds together. Explore three connected 2D regions: the Hidden Leaf Village, Namek, and the In-Between. The hero changes with the region. Walk freely, jump between rooftops or islands, talk to guides, fight roaming rift echoes, and find fragments.
+Press **2D SIDE STORY** in the main menu. This original fan-made crossover follows Naruto and Goku as a fracture pulls their worlds together. Explore three connected 2D regions: the Hidden Leaf Village, Namek, and the In-Between. The hero changes with the region. Walk freely, jump between rooftops or islands, talk to guides, fight roaming rift echoes, and find fragments.
 
 The campaign has four encounters in order: **Naruto vs Sasuke**, **Naruto vs Pain**, **Goku vs Frieza**, and **Goku vs Broly**. Each has original dialogue, an introduction, a second phase, a telegraphed signature attack, a resolution, and a retry flow. Pain shatters the arena’s raised rooftops in phase two; Frieza accelerates his beams; Broly fights among pieces of both homelands. These rivals are story opponents, not extra selectable versus characters.
 
@@ -101,4 +130,4 @@ Each region has fragments above platforms and three roaming echoes that reward a
 
 Progress saves in this browser’s local storage when collecting rewards, upgrading, traveling, resolving a chapter, or choosing **Save & Exit**. It survives reloads on the same browser and server address. It does not sync between devices or different hostnames/ports. **New Story** asks before clearing that browser’s campaign. If browser storage is unavailable, the adventure remains playable for the current session and displays a warning. Touch buttons provide story controls on touch devices; desktop or landscape screens show more of the world.
 
-This is a compact, playable 2D campaign, rather than a full-scale 3D open-world RPG. The browser story test forces boss results to verify every chapter transition and ending, while separately exercising real movement, attacks, exploration combat, upgrades, Riftbreak, retry, persistence, and mobile menus. Logic tests cover boss hazards, recovery, arena destruction, rewards, save validation, and progression. Automated combat simulations supplement these checks; they do not establish competitive balance or tournament placement.
+The browser side-story test forces boss results to verify every chapter transition and ending, while separately exercising real movement, attacks, exploration combat, upgrades, Riftbreak, retry, persistence, and mobile menus. Logic tests cover boss hazards, recovery, arena destruction, rewards, save validation, and progression. Automated combat simulations supplement these checks; they do not establish competitive balance or tournament placement.

@@ -1019,3 +1019,391 @@ button:disabled {
     display: block;
   }
 }
+.story-launch {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+#adventure-start {
+  border: 0;
+  border-radius: 6px;
+  background: #b7f9db;
+  color: #183235;
+  padding: 20px;
+  font:
+    800 13px "DM Sans",
+    sans-serif;
+  cursor: pointer;
+  box-shadow: 0 6px 30px #13203a66;
+}
+#adventure-start span {
+  font-size: 24px;
+  margin-left: 20px;
+  vertical-align: middle;
+}
+.story-launch #story-start {
+  padding: 12px;
+  background: #213b48;
+  color: #d2eee9;
+  font-size: 10px;
+  box-shadow: none;
+}
+#adventure-viewport {
+  position: relative;
+  width: 100%;
+  height: min(72vh, 740px);
+  min-height: 480px;
+  background: #bed5e3;
+  border: 1px solid #596a8980;
+  border-radius: 12px;
+  overflow: hidden;
+}
+#adventure-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+.adventure-hud {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  pointer-events: none;
+}
+.quest-panel,
+.adventure-vitals {
+  background: #11243edb;
+  border: 1px solid #bfd5ed33;
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 8px 25px #10223b22;
+}
+.quest-panel {
+  max-width: 430px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quest-panel small {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #a8e4d7;
+}
+.quest-panel strong {
+  font-size: 18px;
+}
+.quest-panel span {
+  font-size: 11px;
+  color: #c0d0e4;
+}
+.adventure-vitals {
+  width: 215px;
+}
+.adventure-vitals strong {
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+.adventure-vitals > div {
+  height: 7px;
+  border-radius: 5px;
+  background: #41556b;
+  margin: 10px 0;
+  overflow: hidden;
+}
+.adventure-vitals > div i {
+  display: block;
+  height: 100%;
+  background: #9becbb;
+  transition: width 0.15s;
+}
+.adventure-vitals .energy {
+  height: 4px;
+  margin-top: 0;
+}
+.adventure-vitals .energy i {
+  background: #91bfff;
+}
+.adventure-vitals span {
+  font-size: 10px;
+  color: #c1dfd8;
+  letter-spacing: 1px;
+}
+#adventure-boss {
+  position: absolute;
+  top: 154px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360px;
+  max-width: 80%;
+  padding: 14px 20px;
+  background: #241e38e8;
+  border: 1px solid #d6a0de55;
+  border-radius: 8px;
+  text-align: center;
+  pointer-events: none;
+}
+#adventure-boss small {
+  font-size: 9px;
+  color: #dcc6f5;
+  letter-spacing: 2px;
+}
+#adventure-boss strong {
+  display: block;
+  margin: 5px;
+  font:
+    800 25px "Barlow Condensed",
+    sans-serif;
+}
+#adventure-boss > div {
+  height: 7px;
+  background: #635067;
+  border-radius: 4px;
+  overflow: hidden;
+}
+#adventure-boss i {
+  display: block;
+  height: 100%;
+  background: #dc93d6;
+  transition: width 0.15s;
+}
+#adventure-warning {
+  display: block;
+  font-size: 10px;
+  color: #ffd5a9;
+  margin-top: 8px;
+  min-height: 13px;
+}
+#adventure-toast {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 80%;
+  padding: 12px 22px;
+  background: #152c42e8;
+  border: 1px solid #9adec880;
+  border-radius: 6px;
+  color: #ccffe6;
+  font-size: 12px;
+  text-align: center;
+  pointer-events: none;
+}
+.adventure-compass {
+  position: absolute;
+  bottom: 22px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.adventure-compass span,
+.adventure-compass b {
+  background: #142941db;
+  padding: 12px 17px;
+  border-radius: 5px;
+  color: #bce9df;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.adventure-compass button {
+  background: #142941db;
+  border: 1px solid #b2d6ed55;
+  color: #d6e9f9;
+  border-radius: 5px;
+  padding: 12px 16px;
+  font: 700 10px sans-serif;
+  cursor: pointer;
+}
+#adventure-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
+  background: linear-gradient(#0c173333, #0d173dbb);
+  backdrop-filter: blur(3px);
+}
+#adventure-overlay[hidden] {
+  display: none;
+}
+.adventure-dialog {
+  max-width: 700px;
+  width: 100%;
+  padding: 34px 38px;
+  background: #15273bed;
+  border: 1px solid #9bcad366;
+  border-radius: 14px;
+  box-shadow: 0 20px 80px #09162f77;
+}
+.adventure-dialog small {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #b2f3d4;
+}
+.adventure-dialog h2 {
+  font:
+    800 50px/1 "Barlow Condensed",
+    sans-serif;
+  margin: 15px 0;
+  color: #f7efd9;
+}
+.adventure-dialog p {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #d1dfec;
+}
+.adventure-dialog #adventure-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+#adventure-actions button {
+  border: 0;
+  border-radius: 5px;
+  padding: 14px 18px;
+  background: #a8f0d1;
+  color: #183040;
+  font:
+    800 11px "DM Sans",
+    sans-serif;
+  cursor: pointer;
+}
+#adventure-actions button:not(:first-child) {
+  background: #2c455c;
+  color: #d6e7f6;
+}
+.adventure-controls {
+  font-size: 10px;
+  line-height: 1.9;
+  color: #9bacc6;
+  letter-spacing: 0.6px;
+}
+.adventure-touch {
+  display: none;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.adventure-touch button {
+  border: 1px solid #60878d;
+  border-radius: 4px;
+  background: #254552;
+  color: #ecfff8;
+  padding: 13px;
+  font-size: 11px;
+  touch-action: none;
+}
+#adventure-error {
+  padding: 18px;
+  background: #42283c;
+  border: 1px solid #ef959d;
+  color: #ffe0de;
+  border-radius: 7px;
+  line-height: 1.7;
+}
+@media (pointer: coarse) {
+  .adventure-touch {
+    display: flex;
+  }
+  .adventure-compass button {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  #adventure-viewport {
+    min-height: 460px;
+    height: 65vh;
+  }
+  .adventure-hud {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    gap: 8px;
+  }
+  .quest-panel,
+  .adventure-vitals {
+    padding: 10px 12px;
+  }
+  .quest-panel {
+    max-width: 65%;
+  }
+  .quest-panel strong {
+    font-size: 13px;
+  }
+  .quest-panel small {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .quest-panel span {
+    font-size: 9px;
+  }
+  .adventure-vitals {
+    width: 110px;
+  }
+  .adventure-vitals span {
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+  .adventure-dialog {
+    padding: 22px;
+  }
+  .adventure-dialog h2 {
+    font-size: 34px;
+  }
+  .adventure-dialog p {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  #adventure-overlay {
+    padding: 14px;
+  }
+  .adventure-compass {
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+  }
+  .adventure-compass span,
+  .adventure-compass b {
+    padding: 10px;
+    font-size: 9px;
+  }
+  #adventure-boss {
+    top: 146px;
+    padding: 12px;
+  }
+  #adventure-toast {
+    width: 85%;
+    font-size: 10px;
+    bottom: 65px;
+  }
+  #adventure .match-top {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  #adventure-start {
+    padding: 15px;
+    font-size: 11px;
+  }
+}
+
+@media (min-width: 1000px) {
+  #adventure-boss {
+    top: 24px;
+    width: 310px;
+  }
+  .quest-panel {
+    max-width: 365px;
+  }
+}

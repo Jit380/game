@@ -18,6 +18,11 @@ test("delivers fighter menu, simulation, renderer, and styles", async () => {
     ["/story-ui.js", "text/javascript", "createStory"],
     ["/story-art.js", "text/javascript", "drawWorld"],
     ["/villains.js", "text/javascript", "drawVillain"],
+    ["/adventure/client.js", "text/javascript", "createAdventure"],
+    ["/adventure/core.mjs", "text/javascript", "class Adventure"],
+    ["/adventure/world.js", "text/javascript", "createRegion"],
+    ["/adventure/characters.js", "text/javascript", "createCharacter"],
+    ["/vendor/three.module.js", "text/javascript", "REVISION"],
   ]) {
     const r = await fetch(base + file);
     assert.equal(r.status, 200);
@@ -31,7 +36,7 @@ test("does not expose project files or removed game routes", async () => {
     "/server.js",
     "/package.json",
     "/native/project.godot",
-    "/vendor/three.module.js",
+    "/node_modules/three/package.json",
     "/missing",
   ])
     assert.equal((await fetch(base + file)).status, 404);
