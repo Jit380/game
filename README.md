@@ -1,27 +1,39 @@
-# Ultimateman: Dragon Awakening 3D
+# Ultimateman: Dragon Awakening — First Response
 
-An original third-person WebGL action prototype in Neon Manhattan: a procedural New York inspired city district with high rises, avenues, a park, and rooftop dragon shrines. This is a prototype, not a recreation of Spider-Man PS4 or real NYC geography.
+An original third-person superhero story prototype in a procedural New York inspired district. Play Elias Reed, a new guardian whose black armor channels ancient dragon aura through electricity, water, and ice. This is a compact playable opening chapter with procedural graphics, not a production-quality recreation of Spider-Man or geographically accurate New York.
 
 ## Play
 
-Node.js 20+ and a desktop browser with WebGL and hardware acceleration are required.
+Install Node.js 20+; use a desktop Chrome or Edge browser with WebGL and hardware acceleration.
 
 ```sh
 npm ci
 npm start
 ```
 
-Open http://localhost:3000 and click Enter the 3D City. Click the game to capture the mouse; Escape releases it.
+Open http://localhost:3000. Click **Enter the 3D City**. The opening camera sequence can be skipped with Enter. Click the scene to capture your mouse; Escape releases it. If capture is unavailable, hold the mouse button and drag to rotate.
 
-- WASD / arrows: move relative to camera
-- Mouse: orbit third-person camera
-- Click / F: shoot (automatically targets nearby sentinels)
-- Space: jump
+## Controls
+
+- WASD / arrows: movement relative to camera
+- Mouse: third-person camera
 - Shift: sprint
-- E: toggle wall grip, then move into a building to climb to its roof
-- 1 / 2 / 3: electricity (damage), water (healing and knockback), ice (freeze)
-- R: unleash aura at 100; P: pause/resume
+- Space: super jump; Shift + Space: high jump; hold Space while descending to glide
+- Q: dragon step to a nearby rooftop in front of the camera (four-second cooldown)
+- E: wall grip; move into a building to climb and release E to descend. At the story transmitter, E disables it.
+- Click / F: elemental attack with automatic targeting of nearby threats
+- 1 / 2 / 3: electricity for fast damage, water for healing and knockback, ice to freeze
+- R: aura blast when charged to 100
+- P: pause; M: mute/unmute synthesized audio
 
-Restore three purple rooftop dragon seals shown on the radar and defeat 15 sentinels. Seals heal you and charge aura. The current objective reports distance to the nearest remaining seal.
+## Chapter One: First Response
 
-Run `npm test` for HTTP checks. Three.js is served locally; no runtime CDN or credentials are needed. The optional font uses Google Fonts with a system fallback.
+Follow the gold mission marker. Respond to Mira's distress call, investigate a robbery, sprint after a fleeing courier, protect three witnesses from the Warden's sentinels, reach and disable a rooftop transmitter, then return for a confrontation with the Warden. The mission advances through dialogue and actions; there are no collectible seal objectives or arbitrary enemy kill quotas. Mission transitions restore some health; disabling the transmitter charges your aura for the final encounter.
+
+Presentation includes an opening camera sequence, a rounded armored hero, textured facades and streets, water towers, shops, moving taxis, atmospheric sunset lighting, elemental trails, hit feedback, generated audio, and camera collision checks. Graphics remain stylized and animations procedural. Traffic is decorative; there are no interiors, voice actors, or full campaign yet.
+
+## Development
+
+`npm test` checks the HTTP server, local Three.js delivery, and private file protection. `npm run test:browser` runs Chromium story regression checks, including actual elemental combat and witness failure. On machines without Chromium, first run `npx playwright install chromium`; `CHROMIUM_PATH` can point to an existing installation. The browser test injects private controls into its own HTTP response to advance mission positions; those controls are not shipped to players. Three.js is served locally. No credentials, CDN, or external art assets are required; the optional Google font has a system fallback.
+
+If the game cannot load, it reports an error on the title screen. Stop the old server, run `git pull`, `npm ci`, and `npm start`, then hard-refresh your browser. Restarting the server is necessary when server routes change.
