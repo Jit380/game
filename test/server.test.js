@@ -14,6 +14,10 @@ test("delivers fighter menu, simulation, renderer, and styles", async () => {
     ["/art.js", "text/javascript", "drawFighter"],
     ["/game.js", "text/javascript", "startMatch"],
     ["/style.css", "text/css", ".fighter-card"],
+    ["/story.mjs", "text/javascript", "class Campaign"],
+    ["/story-ui.js", "text/javascript", "createStory"],
+    ["/story-art.js", "text/javascript", "drawWorld"],
+    ["/villains.js", "text/javascript", "drawVillain"],
   ]) {
     const r = await fetch(base + file);
     assert.equal(r.status, 200);

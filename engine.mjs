@@ -1,3 +1,45 @@
+export const ENEMIES = [
+  {
+    id: "sasuke",
+    name: "Sasuke",
+    title: "THE RIVAL",
+    color: "#a1a2ff",
+    secondary: "#393966",
+    speed: 355,
+    weight: 1.02,
+    special: "Chidori",
+  },
+  {
+    id: "pain",
+    name: "Pain",
+    title: "THE DEVA PATH",
+    color: "#f38664",
+    secondary: "#302b44",
+    speed: 315,
+    weight: 1.14,
+    special: "Almighty Push",
+  },
+  {
+    id: "frieza",
+    name: "Frieza",
+    title: "THE EMPEROR",
+    color: "#d8a1ff",
+    secondary: "#7f459f",
+    speed: 350,
+    weight: 1.07,
+    special: "Death Beam",
+  },
+  {
+    id: "broly",
+    name: "Broly",
+    title: "THE BERSERKER",
+    color: "#b0f56d",
+    secondary: "#356b3a",
+    speed: 325,
+    weight: 1.32,
+    special: "Gigantic Roar",
+  },
+];
 export const ROSTER = [
   {
     id: "midoriya",
@@ -126,7 +168,7 @@ const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 export class Fighter {
   constructor(character, slot) {
     this.character =
-      ROSTER.find((r) => r.id === character) ||
+      [...ROSTER, ...ENEMIES].find((r) => r.id === character) ||
       ROSTER.find((r) => r.id === (slot === 0 ? "naruto" : "goku"));
     this.slot = slot;
     this.w = 38;
@@ -480,7 +522,7 @@ export class Arena {
     }
     f.energy -= 24;
     f.cool = 1.05;
-    if (["goku", "ryuga", "pikachu"].includes(f.character.id))
+    if (["goku", "ryuga", "pikachu", "frieza", "pain"].includes(f.character.id))
       f.attack = {
         kind: "beam",
         t: 0,

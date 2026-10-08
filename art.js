@@ -1,3 +1,4 @@
+import { drawVillain } from "./villains.js";
 const TAU = Math.PI * 2;
 function shape(c, points, fill, stroke = "#172333", line = 2) {
   c.beginPath();
@@ -32,6 +33,8 @@ function line(c, x, y, xx, yy, color, width) {
   c.stroke();
 }
 export function drawFighter(c, id, x, y, scale = 1, pose = {}) {
+  if (["sasuke", "pain", "frieza", "broly"].includes(id))
+    return drawVillain(c, id, x, y, scale, pose);
   if (["midoriya", "ryuga", "pikachu"].includes(id))
     return drawNewFighter(c, id, x, y, scale, pose);
   const facing = pose.facing || 1,
@@ -373,6 +376,11 @@ function mountain(c, x, y, w, h, color) {
 export function drawStage(c, stage, time = 0) {
   c.save();
   const id = stage.id;
+  if (id === "fracture") {
+    drawFracture(c, stage, time);
+    c.restore();
+    return;
+  }
   if (["leaf", "namek", "ring"].includes(id)) {
     drawNewStage(c, stage, time);
     c.restore();
@@ -694,7 +702,13 @@ export function drawArena(c, arena) {
     c.font = "bold 11px sans-serif";
     c.textAlign = "center";
     c.fillText(
-      f.slot === 0 ? "P1" : arena.mode === "cpu" ? "CPU" : "P2",
+      f.slot === 0
+        ? "P1"
+        : arena.bossId
+          ? "RIVAL"
+          : arena.mode === "cpu"
+            ? "CPU"
+            : "P2",
       f.cx,
       f.y - 15,
     );
@@ -807,7 +821,12 @@ export function drawArena(c, arena) {
       f.damage < 60 ? "#fff" : f.damage < 120 ? "#ffda79" : "#ff7c83";
     c.font = "900 34px sans-serif";
     c.fillText(Math.floor(f.damage) + "%", 0, 48);
-    for (let i = 0; i < 3; i++) {
+    if (f.stocks > 3) {
+      c.font = "bold 14px sans-serif";
+      c.fillStyle = color;
+      c.fillText("×" + f.stocks, 110, 16);
+    }
+    for (let i = 0; i < 3 && f.stocks <= 3; i++) {
       oval(c, 112 + i * 15, 12, 4, 4, i < f.stocks ? color : "#47576e", false);
     }
     c.fillStyle = "#344760";
@@ -834,7 +853,12 @@ export function drawArena(c, arena) {
   );
   c.font = "10px sans-serif";
   c.fillStyle = "#e5edf6";
-  c.fillText("3 STOCK · " + arena.stage.name.toUpperCase(), 640, 86);
+  c.fillText(
+    (arena.bossId ? "STORY ENCOUNTER · " : "3 STOCK · ") +
+      arena.stage.name.toUpperCase(),
+    640,
+    86,
+  );
   if (arena.countdown > 0) {
     c.save();
     c.textAlign = "center";
@@ -1226,4 +1250,88 @@ function drawNewStage(c, stage, time) {
       c.fillText("BRAWL", 640, p.y + 44);
     }
   }
+}
+
+function drawFracture(c, stage, time) {
+  const sky = c.createLinearGradient(0, 0, 0, 720);
+  sky.addColorStop(0, "#101831");
+  sky.addColorStop(1, "#635286");
+  c.fillStyle = sky;
+  c.fillRect(0, 0, 1280, 720);
+  for (let i = 0; i < 120; i++) {
+    c.globalAlpha = 0.3 + Math.sin(time + i) * 0.2;
+    oval(c, (i * 127.3) % 1280, (i * 61.8) % 630, 1.3, 1.3, "#c9dfff", false);
+  }
+  c.globalAlpha = 1;
+  c.strokeStyle = "#bd9aff88";
+  c.lineWidth = 7;
+  c.beginPath();
+  c.moveTo(650, -20);
+  c.lineTo(580, 120);
+  c.lineTo(680, 200);
+  c.lineTo(585, 330);
+  c.lineTo(720, 490);
+  c.lineTo(670, 750);
+  c.stroke();
+  for (let i = 0; i < 7; i++) {
+    const x = i * 205 - 30,
+      y = 280 + (i % 3) * 50 + Math.sin(time * 0.3 + i) * 8;
+    shape(
+      c,
+      [
+        [x, y],
+        [x + 110, y - 15],
+        [x + 160, y + 40],
+        [x + 40, y + 65],
+      ],
+      "#504f77",
+    );
+    if (i % 2) {
+      line(c, x + 65, y - 20, x + 65, y - 90, "#5c8d88", 5);
+      oval(c, x + 65, y - 90, 36, 20, "#8dc59d");
+    } else {
+      shape(
+        c,
+        [
+          [x + 10, y],
+          [x + 25, y - 90],
+          [x + 75, y - 90],
+          [x + 90, y],
+        ],
+        "#9983a1",
+      );
+      shape(
+        c,
+        [
+          [x + 5, y - 90],
+          [x + 50, y - 125],
+          [x + 95, y - 90],
+        ],
+        "#977c92",
+      );
+    }
+  }
+  oval(c, 920, 120, 65, 65, "#d1bfed", false);
+  for (const p of stage.platforms) {
+    shape(
+      c,
+      [
+        [p.x, p.y],
+        [p.x + p.w, p.y],
+        [p.x + p.w - 20, p.y + p.h],
+        [p.x + p.w * 0.6, p.y + p.h + 25],
+        [p.x + 25, p.y + p.h],
+      ],
+      "#665784",
+      "#34364f",
+    );
+    c.fillStyle = "#d0b5ed";
+    c.fillRect(p.x, p.y, p.w, 8);
+    c.fillStyle = "#a3d6c5";
+    c.fillRect(p.x, p.y + 8, p.w, 4);
+  }
+  c.fillStyle = "#e2cafa";
+  c.font = "700 18px sans-serif";
+  c.textAlign = "center";
+  c.fillText("THE SKY BETWEEN US", 640, 158);
 }

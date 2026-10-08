@@ -1,5 +1,6 @@
+import { createStory } from "/story-ui.js";
 import { Arena, Fighter, ROSTER, STAGES } from "/engine.mjs";
-import { drawPortrait, drawArena } from "/art.js";
+import { drawPortrait, drawArena, drawFighter } from "/art.js";
 import { Tournament } from "/tournament.mjs";
 const $ = (s) => document.querySelector(s),
   canvas = $("#arena"),
@@ -13,6 +14,10 @@ let arena = null,
   last = performance.now(),
   beat = 0,
   resultShown = false;
+let story;
+export function getStory() {
+  return story;
+}
 let tournament = null,
   socket = null,
   onlineSlot = 0,
@@ -326,6 +331,7 @@ export function startMatch(options = {}) {
   drawArena(ctx, arena);
 }
 export function returnToSelect() {
+  if (story?.active) story.exit();
   disconnectOnline();
   tournament = null;
   arena = null;
@@ -481,9 +487,29 @@ for (const button of document.querySelectorAll("[data-touch]")) {
     sendOnlineInput();
   };
 }
+story = createStory({
+  sound,
+  onExit: () => {
+    $("#lobby").hidden = false;
+  },
+});
+$("#story-start").onclick = () => {
+  openAudio();
+  disconnectOnline();
+  arena = null;
+  tournament = null;
+  $("#lobby").hidden = true;
+  $("#match").hidden = true;
+  story.start();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+const storyArt = $("#story-hero-art").getContext("2d");
+drawFighter(storyArt, "goku", 310, 285, 2.7, { facing: -1 });
+drawFighter(storyArt, "naruto", 145, 290, 2.8, { facing: 1 });
 function frame(now) {
   const dt = Math.min(0.15, (now - last) / 1000);
   last = now;
+  if (story?.active) story.tick(dt);
   if (arena) {
     if (arena.mode !== "online") {
       accumulator += dt;

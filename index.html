@@ -30,6 +30,20 @@
             fight.
           </p>
         </div>
+        <section class="story-banner" aria-label="Story adventure">
+          <div>
+            <span class="eyebrow">NEW · A STORY ADVENTURE</span>
+            <h2>WORLDS <em>COLLIDE.</em></h2>
+            <p>
+              Explore the Hidden Leaf. Cross the green skies of Namek.<br />Face
+              old rivals. Bring two worlds home.
+            </p>
+          </div>
+          <div class="story-banner-art" aria-hidden="true">
+            <canvas id="story-hero-art" width="460" height="260"></canvas>
+          </div>
+          <button id="story-start">ENTER STORY MODE <span>→</span></button>
+        </section>
         <div class="select-top">
           <h2>CHOOSE YOUR FIGHTER</h2>
           <span id="selection-label">PLAYER 1 · NARUTO</span>
@@ -194,9 +208,63 @@
           P1: A/D · W/SPACE · J ATTACK · K SPECIAL · L SHIELD · SHIFT DODGE
         </p>
       </section>
+      <section id="story" hidden>
+        <div class="match-top">
+          <button id="story-exit" class="utility">← SAVE & EXIT</button
+          ><span id="story-location">WORLDS COLLIDE</span>
+          <div>
+            <button id="story-map" class="utility">WORLD ATLAS · M</button>
+            <button id="story-pause" class="utility">PAUSE · ESC</button>
+          </div>
+        </div>
+        <p id="story-status" class="story-status" role="status"></p>
+        <div class="arena-wrap story-wrap">
+          <canvas
+            id="story-canvas"
+            width="1280"
+            height="720"
+            aria-label="Worlds Collide exploration and story encounters"
+          ></canvas>
+          <div id="story-overlay" hidden>
+            <div class="story-dialog">
+              <canvas
+                id="story-portrait"
+                width="300"
+                height="240"
+                hidden
+              ></canvas>
+              <div class="story-dialog-copy">
+                <small id="story-caption"></small>
+                <h2 id="story-title"></h2>
+                <p id="story-detail"></p>
+                <div id="story-actions"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="story-touch">
+          <button data-story-touch="left">◀</button
+          ><button data-story-touch="right">▶</button
+          ><button data-story-touch="up">JUMP</button
+          ><button data-story-touch="interact">TALK</button
+          ><button data-story-touch="attack">HIT</button
+          ><button data-story-touch="special">SPECIAL</button
+          ><button data-story-touch="shield">GUARD</button
+          ><button data-story-touch="dodge">DASH</button
+          ><button data-story-touch="rift">RIFTBREAK</button>
+        </div>
+        <div class="story-bottom">
+          <p>
+            A/D MOVE · W/SPACE DOUBLE JUMP · SHIFT DASH · E TALK / ENTER · M
+            ATLAS<br />FIGHTS: J ATTACK · K SPECIAL · L SHIELD · W+K RECOVERY ·
+            R RIFTBREAK
+          </p>
+          <button id="story-new" class="utility">NEW STORY</button>
+        </div>
+      </section>
       <div id="load-error" hidden role="alert"></div>
       <footer>
-        <span>ANIME BRAWL <b>✦</b> FIRST PLAYABLE</span
+        <span>ANIME BRAWL <b>✦</b> WORLDS COLLIDE UPDATE</span
         ><span>Built for good fights, not grinding.</span>
       </footer>
     </main>
