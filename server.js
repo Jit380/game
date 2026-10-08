@@ -1,50 +1,54 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
-const root = __dirname;
+const files = {
+  "/": "index.html",
+  "/index.html": "index.html",
+  "/game.js": "game.js",
+  "/engine.mjs": "engine.mjs",
+  "/art.js": "art.js",
+  "/style.css": "style.css",
+  "/assets/fonts/barlow-condensed.ttf": "assets/fonts/barlow-condensed.ttf",
+  "/assets/fonts/dm-sans.ttf": "assets/fonts/dm-sans.ttf",
+};
 const server = http.createServer((req, res) => {
-  const files = {
-    "/": "index.html",
-    "/index.html": "index.html",
-    "/game.js": "game.js",
-    "/boot.js": "boot.js",
-    "/style.css": "style.css",
-    "/vendor/three.module.js": "node_modules/three/build/three.module.js",
-    "/vendor/three.core.js": "node_modules/three/build/three.core.js",
-  };
-  const file = files[req.url.split("?")[0]];
+  const file = files[(req.url || "/").split("?")[0]];
+  res.setHeader("Cache-Control", "no-store");
   if (!file) {
     res.writeHead(404);
     return res.end("Not found");
   }
-  fs.readFile(path.join(root, file), (err, data) => {
+  fs.readFile(path.join(__dirname, file), (err, data) => {
     if (err) {
       res.writeHead(500);
-      return res.end("Server error");
+      return res.end("Could not load game file");
     }
-    res.setHeader("Cache-Control", "no-store");
     res.setHeader(
       "Content-Type",
-      file.endsWith(".js")
-        ? "text/javascript"
+      file.endsWith(".js") || file.endsWith(".mjs")
+        ? "text/javascript; charset=utf-8"
         : file.endsWith(".css")
-          ? "text/css"
-          : "text/html",
+          ? "text/css; charset=utf-8"
+          : file.endsWith(".ttf")
+            ? "font/ttf"
+            : "text/html; charset=utf-8",
     );
     res.end(data);
   });
 });
-if (
-  require.main === module &&
-  !fs.existsSync(path.join(root, "node_modules/three/build/three.module.js"))
-) {
-  console.error(
-    "Missing 3D engine. Run npm ci in the game folder, then npm start.",
-  );
-  process.exit(1);
-}
-if (require.main === module)
+if (require.main === module) {
+  server.on("error", (err) => {
+    console.error(
+      err.code === "EADDRINUSE"
+        ? "Port is already in use. Stop the old game server with Ctrl+C, then start again."
+        : err.message,
+    );
+    process.exitCode = 1;
+  });
   server.listen(Number(process.env.PORT || 3000), "0.0.0.0", () =>
-    console.log("Ultimateman running on port " + (process.env.PORT || 3000)),
+    console.log(
+      "Anime Brawl running at http://localhost:" + (process.env.PORT || 3000),
+    ),
   );
+}
 module.exports = server;

@@ -1,84 +1,180 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Ultimateman · Dragon Awakening</title>
+    <title>Anime Brawl — Platform Fighter</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <canvas id="world" aria-label="Ultimateman city action game"></canvas>
-    <header>
-      <div class="brand">
-        U<span>ULTIMATEMAN<small>DRAGON AWAKENING</small></span>
-      </div>
-      <div class="district">ANIME / BOSS UPDATE <b> / </b> NEON MANHATTAN</div>
-      <button id="pause">PAUSE · P</button>
-    </header>
-    <aside id="hud">
-      <div class="label">VITAL SIGNS <span id="healthText">100</span></div>
-      <div class="bar"><i id="health"></i></div>
-      <div class="label">DRAGON AURA <span id="auraText">0 / 100</span></div>
-      <div class="bar aura"><i id="aura"></i></div>
-      <div id="status">STREET LEVEL</div>
-      <div id="traversal">Q · DRAGON STEP READY</div>
-    </aside>
-    <section id="mission">
-      <small>ACTIVE OBJECTIVE</small>
-      <h2 id="objective">Answer the distress call</h2>
-      <p id="progress">Follow the gold signal to East Ninth.</p>
-    </section>
-    <footer>
-      <div id="powers">
-        <button data-power="0" class="selected">
-          1 <strong>ϟ</strong> ELECTRICITY</button
-        ><button data-power="1">2 <strong>≈</strong> WATER</button
-        ><button data-power="2">3 <strong>❄</strong> ICE</button>
-      </div>
-      <p>
-        WASD · MOVE &nbsp; MOUSE · CAMERA &nbsp; CLICK / F · ATTACK &nbsp; SPACE
-        · JUMP / HOLD TO GLIDE &nbsp; SHIFT · SPRINT &nbsp; E · WALL GRIP &nbsp;
-        Q · ROOFTOP LEAP &nbsp; C · DODGE &nbsp; R · AURA &nbsp; M · AUDIO
-      </p>
-    </footer>
-    <div id="overlay">
-      <div class="panel">
-        <small>AN ORIGINAL SUPERHERO ADVENTURE</small>
-        <h1>POWER HAS<br />A NEW <em>ORIGIN.</em></h1>
-        <p id="story">
-          Elias Reed never asked to be a hero. When an ancient dragon’s aura
-          saves his life, he gains powers he barely understands. Tonight, a
-          stolen core and a string of street crimes pull him into a
-          conspiracy—and New York needs someone to answer.
-        </p>
-        <div class="tags">
-          <span>EXPLORE THE CITY</span><span>CHASE CRIMINALS</span
-          ><span>LIVE THE ORIGIN STORY</span>
+    <main>
+      <header>
+        <a class="logo" href="#" aria-label="Anime Brawl home"
+          >ANIME<span>BRAWL<i>✦</i></span></a
+        >
+        <div class="edition">
+          A FAN-MADE PLATFORM FIGHTER <b>2D / BROWSER EDITION</b>
         </div>
-        <button id="begin">ENTER THE 3D CITY <span>→</span></button>
-        <button id="bossRush" disabled>PLAY BOSS BATTLE →</button>
-        <p class="hint">
-          Desktop keyboard + mouse recommended · playable prototype
+        <button id="audio" class="utility" aria-label="Toggle audio">
+          SOUND ON
+        </button>
+      </header>
+      <section id="lobby">
+        <div class="intro">
+          <div>
+            <div class="eyebrow"><i></i> PICK YOUR LEGEND</div>
+            <h1>Small stage.<br /><em>Big main-character energy.</em></h1>
+          </div>
+          <p>
+            Three anime icons. Three stocks.<br />One very satisfying fight.
+          </p>
+        </div>
+        <div class="select-top">
+          <h2>CHOOSE YOUR FIGHTER</h2>
+          <span id="selection-label">PLAYER 1 · NARUTO</span>
+        </div>
+        <div class="roster">
+          <button
+            class="fighter-card selected"
+            data-fighter="naruto"
+            style="--accent: #ffbc50"
+          >
+            <span class="card-no">01 / THE SHINOBI</span
+            ><canvas data-portrait="naruto"></canvas>
+            <div class="card-name">NARUTO <span>↗</span></div>
+            <div class="card-details">RASENGAN <i>Speed + pressure</i></div>
+            <span class="picked">P1 SELECTED</span></button
+          ><button
+            class="fighter-card"
+            data-fighter="luffy"
+            style="--accent: #ff6676"
+          >
+            <span class="card-no">02 / THE CAPTAIN</span
+            ><canvas data-portrait="luffy"></canvas>
+            <div class="card-name">LUFFY <span>↗</span></div>
+            <div class="card-details">
+              GUM-GUM PISTOL <i>Reach + launches</i>
+            </div>
+            <span class="picked">P1 SELECTED</span></button
+          ><button
+            class="fighter-card"
+            data-fighter="goku"
+            style="--accent: #6bafff"
+          >
+            <span class="card-no">03 / THE SAIYAN</span
+            ><canvas data-portrait="goku"></canvas>
+            <div class="card-name">GOKU <span>↗</span></div>
+            <div class="card-details">KAMEHAMEHA <i>Power + zoning</i></div>
+            <span class="picked">P1 SELECTED</span>
+          </button>
+        </div>
+        <div class="match-settings">
+          <div>
+            <label for="mode">MATCH TYPE</label
+            ><select id="mode">
+              <option value="cpu">VS. CPU</option>
+              <option value="local">LOCAL 2 PLAYER</option>
+            </select>
+          </div>
+          <div>
+            <label for="opponent">OPPONENT</label
+            ><select id="opponent">
+              <option value="goku">Goku</option>
+              <option value="luffy">Luffy</option>
+              <option value="naruto">Naruto</option>
+            </select>
+          </div>
+          <div>
+            <label for="difficulty">CPU LEVEL</label
+            ><select id="difficulty">
+              <option value="normal">Normal</option>
+              <option value="easy">Easy</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="stage-setting">
+            <label>STAGE SELECT</label>
+            <div class="stages">
+              <button data-stage="temple" class="active">SKY TEMPLE</button
+              ><button data-stage="docks">SUNSET DOCKS</button
+              ><button data-stage="moon">MOON ARENA</button>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-row">
+          <div class="controls-hint">
+            <strong>LEARN IT IN ONE ROUND.</strong>
+            <p>
+              A/D move · W/Space double jump · J attack · K special · L
+              shield<br />Shift dodge · W + K airborne recovery · S + J spike ·
+              Esc pause
+            </p>
+          </div>
+          <button id="start" disabled>
+            <span>ENTER THE ARENA</span><b>→</b>
+          </button>
+        </div>
+        <p class="footnote">
+          Original drawn fan art · No downloads · No sign-in · Just throw hands.
         </p>
-      </div>
-    </div>
-    <div id="comms">
-      <small id="speaker"></small>
-      <p id="dialogue"></p>
-    </div>
-    <div id="boss">
-      <small id="bossPhase">THE WARDEN</small>
-      <div class="bar"><i id="bossHealth"></i></div>
-    </div>
-    <div id="toast"></div>
-    <div id="cinematic">
-      <div class="letterbox top"></div>
-      <div class="letterbox bottom"></div>
-      <div class="chapter">
-        CHAPTER ONE <strong>FIRST RESPONSE</strong
-        ><span>ENTER · SKIP INTRO</span>
-      </div>
-    </div>
-    <script src="/boot.js"></script>
+      </section>
+      <section id="match" hidden>
+        <div class="match-top">
+          <button id="back" class="utility">← CHARACTER SELECT</button
+          ><span id="match-description"></span
+          ><button id="pause" class="utility">PAUSE · ESC</button>
+        </div>
+        <div class="arena-wrap">
+          <canvas
+            id="arena"
+            width="1280"
+            height="720"
+            aria-label="Two-dimensional anime platform fighting arena"
+          ></canvas>
+          <div id="match-overlay" hidden>
+            <div>
+              <small id="overlay-caption">TAKE A BREATHER</small>
+              <h2 id="overlay-title">PAUSED</h2>
+              <p id="overlay-detail"></p>
+              <button id="resume">RESUME MATCH →</button
+              ><button id="rematch">REMATCH ↻</button
+              ><button id="select-again">CHARACTER SELECT</button>
+            </div>
+          </div>
+          <div class="touch-controls">
+            <div>
+              <button data-touch="left">◀</button
+              ><button data-touch="right">▶</button
+              ><button data-touch="up">↑</button>
+            </div>
+            <div>
+              <button data-touch="jump">JUMP</button
+              ><button data-touch="attack">HIT</button
+              ><button data-touch="special">SPECIAL</button
+              ><button data-touch="shield">GUARD</button>
+            </div>
+          </div>
+        </div>
+        <p id="match-controls">
+          P1: A/D · W/SPACE · J ATTACK · K SPECIAL · L SHIELD · SHIFT DODGE
+        </p>
+      </section>
+      <div id="load-error" hidden role="alert"></div>
+      <footer>
+        <span>ANIME BRAWL <b>✦</b> FIRST PLAYABLE</span
+        ><span>Built for good fights, not grinding.</span>
+      </footer>
+    </main>
+    <script>
+      setTimeout(() => {
+        if (!window.brawlReady) {
+          const e = document.querySelector("#load-error");
+          e.hidden = false;
+          e.textContent =
+            "The new game could not load. Stop the old server with Ctrl+C, then run git pull, npm ci, and npm start in the game folder. Refresh this page.";
+        }
+      }, 10000);
+    </script>
+    <script type="module" src="/game.js"></script>
   </body>
 </html>

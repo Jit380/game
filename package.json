@@ -1,17 +1,14 @@
 {
-  "name": "ultimateman-dragon-awakening",
-  "version": "0.1.0",
+  "name": "anime-brawl",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "test": "node --test",
-    "test:browser": "node scripts/story-smoke.cjs"
+    "test": "node --test test/*.test.js",
+    "test:browser": "node scripts/browser-smoke.cjs"
   },
   "engines": {
     "node": ">=20"
-  },
-  "dependencies": {
-    "three": "^0.180.0"
   },
   "devDependencies": {
     "playwright": "1.64.0"

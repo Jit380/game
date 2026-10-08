@@ -1,4 +1,4 @@
-const { test, after, before } = require("node:test");
+const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const server = require("../server");
 let base;
@@ -7,22 +7,28 @@ before(async () => {
   base = "http://127.0.0.1:" + server.address().port;
 });
 after(() => server.close());
-test("serves playable page and both required assets", async () => {
+test("delivers fighter menu, simulation, renderer, and styles", async () => {
   for (const [file, type, marker] of [
-    ["/", "text/html", 'id="world"'],
-    ["/game.js", "text/javascript", "WebGLRenderer"],
-    ["/boot.js", "text/javascript", "await import"],
-    ["/style.css", "text/css", "#overlay"],
-    ["/vendor/three.module.js", "text/javascript", "three.core.js"],
-    ["/vendor/three.core.js", "text/javascript", "class Vector3"],
+    ["/", "text/html", "ANIME"],
+    ["/engine.mjs", "text/javascript", "class Arena"],
+    ["/art.js", "text/javascript", "drawFighter"],
+    ["/game.js", "text/javascript", "startMatch"],
+    ["/style.css", "text/css", ".fighter-card"],
   ]) {
     const r = await fetch(base + file);
     assert.equal(r.status, 200);
-    assert.match(r.headers.get("content-type"), new RegExp(type));
+    assert.ok(r.headers.get("content-type").startsWith(type));
+    assert.equal(r.headers.get("cache-control"), "no-store");
     assert.ok((await r.text()).includes(marker));
   }
 });
-test("rejects paths outside public assets", async () => {
-  for (const file of ["/package.json", "/server.js", "/missing"])
+test("does not expose project files or removed game routes", async () => {
+  for (const file of [
+    "/server.js",
+    "/package.json",
+    "/native/project.godot",
+    "/vendor/three.module.js",
+    "/missing",
+  ])
     assert.equal((await fetch(base + file)).status, 404);
 });

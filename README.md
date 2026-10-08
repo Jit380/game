@@ -1,17 +1,55 @@
-# Ultimateman — First Response
+# Anime Brawl
 
-The primary build is now a **native Windows game made with Godot 4.6.3**, with an original rigged anime character, skeletal animation clips, and a short superhero story chapter.
+A fresh **2D browser platform fighter** inspired by Super Smash Flash 2. Play as Naruto, Luffy, or Goku in a three-stock match against the CPU or a friend on the same keyboard. Character art is drawn specifically for this project; the game uses no ripped sprites or external runtime assets.
 
-## Download and play
+## Play
 
-[Download the Windows game](https://github.com/Jit380/game/raw/refs/heads/main/dist/Ultimateman-Windows.zip), extract the ZIP, and double-click **Ultimateman.exe**. No browser or Node.js is needed. Windows 10/11 x64 and an OpenGL 3.3-capable graphics driver are required.
+Requires Node.js 20 or newer. In the repository folder:
 
-Start **Chapter One** to pursue a courier, protect witnesses, investigate a rooftop transmitter, and confront the Warden. **Play the Warden Encounter** jumps directly to the two-phase boss fight.
+```sh
+npm ci
+npm start
+```
 
-WASD moves, mouse controls the camera, Shift sprints, Space jumps/glides, Q leaps to rooftops, E enables wall grip/interacts, click/F attacks, 1/2/3 select elements, C dodges, R releases aura, and Escape pauses.
+Open **http://localhost:3000**, choose your fighter, opponent, stage, and mode, then enter the arena. If an old game server is running, stop it with Ctrl+C before starting this one. This replaces the earlier 3D and Windows builds; their source remains in Git history.
 
-See [native/README.md](native/README.md) for source, export, and test instructions. The graphics are stylized prototype art. The Windows build was exported and structurally verified on Linux; it has not yet been launched on Windows hardware.
+## Controls
 
-## Earlier browser prototype
+| Action                        | Player 1      | Player 2 (local mode) |
+| ----------------------------- | ------------- | --------------------- |
+| Move                          | A / D         | Left / Right arrows   |
+| Jump / double jump            | W or Space    | Up arrow              |
+| Attack                        | J             | I                     |
+| Special                       | K             | O                     |
+| Shield                        | L             | P                     |
+| Dodge                         | Left Shift    | Right Shift           |
+| Up attack / air recovery      | W + J / W + K | Up + I / Up + O       |
+| Down attack / aerial spike    | S + J         | Down + I              |
+| Drop through a small platform | S + Space     | Down + Up             |
 
-The root JavaScript files remain available as the earlier browser version. `npm ci && npm start` runs that version at http://localhost:3000. It does **not** launch the new native game.
+Escape pauses; R rematches after a result. Mouse-clicking the arena also attacks for Player 1. Touch buttons provide basic single-player movement and attacks on touch screens; desktop keyboards provide the full control set. Some keyboards limit simultaneous keys, which can affect local two-player play.
+
+## Fighting
+
+Damage starts at 0% and rises when you get hit. Higher damage means stronger knockback. Launch your opponent beyond the arena to remove a stock. Lose all three stocks and the match ends. If the three-minute timer expires, remaining stocks decide the winner, followed by lower damage; exact ties produce a draw.
+
+- **Naruto:** fast movement and a rushing Rasengan.
+- **Luffy:** a long-reaching Gum-Gum Pistol that sends rivals flying.
+- **Goku:** charge and fire a Kamehameha beam.
+
+Neutral attacks chain into a stronger third hit. Up attacks launch upward; down attacks spike in the air. Shields lose strength when held or hit, and break under pressure. Dodge grants brief invulnerability. Specials spend a regenerating meter; up-special recovers in the air once before landing. Ledge grabs help a recovering fighter return.
+
+Sky Temple has three platforms, Sunset Docks has two, and Moon Arena is a flat stage. CPU difficulty changes reactions, defense, and special usage. Dynamic camera framing, attack effects, knockback shake, hit pauses, and generated arcade audio accompany the fights.
+
+## Development and tests
+
+The simulation lives in `engine.mjs`, drawings in `art.js`, browser flow/input in `game.js`, and the static HTTP server in `server.js`. No bundler or build step is needed. Only the development browser test uses a package dependency.
+
+```sh
+npm test
+npm run test:browser
+```
+
+The browser suite uses Playwright. It automatically uses `/usr/bin/chromium` when available; set `CHROMIUM_PATH` for another installation or run `npx playwright install chromium`. `CAPTURE_DIR=/tmp npm run test:browser` captures the menu and a match. Logic tests cover movement, double jumps, platform landing, melee, shields, distinct specials, fast projectiles, recovery, stocks, timing, and CPU behavior. Browser checks exercise selection, keyboard controls, hits, shielding, pause, results, rematches, CPU pursuit, specials, and small-screen layout.
+
+Fonts are served locally; their SIL Open Font License notices are in `assets/fonts`. This is an unofficial fan-made game and is not affiliated with the character owners. It currently supports two fighters per match, three characters, three stages, local play, and CPU play; online multiplayer and full Super Smash Flash 2 feature parity are outside this build.
