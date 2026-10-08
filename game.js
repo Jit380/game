@@ -18,6 +18,22 @@ renderer.setSize(innerWidth, innerHeight);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#b5a599");
 scene.fog = new THREE.Fog("#b5a599", 110, 570);
+const sky = new THREE.Mesh(
+  new THREE.SphereGeometry(850, 32, 16),
+  new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    uniforms: {
+      top: { value: new THREE.Color("#537fa8") },
+      bottom: { value: new THREE.Color("#efd0ae") },
+    },
+    vertexShader:
+      "varying vec3 vWorld;void main(){vWorld=(modelMatrix*vec4(position,1.0)).xyz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+    fragmentShader:
+      "varying vec3 vWorld;uniform vec3 top;uniform vec3 bottom;void main(){float h=clamp(normalize(vWorld).y*1.8,0.0,1.0);gl_FragColor=vec4(mix(bottom,top,pow(h,0.6)),1.0);}",
+  }),
+);
+scene.add(sky);
 const camera = new THREE.PerspectiveCamera(
   65,
   innerWidth / innerHeight,
@@ -80,6 +96,7 @@ const masonry = texture((c) => {
       c.fillRect(x + (y % 32 ? 32 : 0) + 1, y + 1, 62, 14);
     }
 }, 4);
+masonry.repeat.set(32, 16);
 asphalt.map = texture((c) => {
   c.fillStyle = "#757575";
   c.fillRect(0, 0, 256, 256);
@@ -204,11 +221,116 @@ black.bumpMap = texture((c) => {
   }
 }, 5);
 black.bumpScale = 0.025;
-part(0.88, 1.0, 0.46, black, 0, 1.57, 0);
+part(
+  0.88,
+  1.0,
+  0.46,
+  new THREE.MeshToonMaterial({ color: 0x172534 }),
+  0,
+  1.57,
+  0,
+);
 part(0.55, 0.38, 0.43, black, 0, 1.07, 0);
 part(0.24, 0.24, 0.25, black, 0, 2.11, 0);
-part(0.47, 0.58, 0.49, black, 0, 2.45, 0);
-part(0.38, 0.06, 0.035, green, 0, 2.48, -0.25);
+const tones = new THREE.DataTexture(
+  new Uint8Array([65, 125, 200, 255]),
+  4,
+  1,
+  THREE.RedFormat,
+);
+tones.minFilter = tones.magFilter = THREE.NearestFilter;
+tones.needsUpdate = true;
+const toon = (color) =>
+  new THREE.MeshToonMaterial({ color, gradientMap: tones });
+const skin = toon("#efb99b"),
+  hairMat = toon("#153f50");
+part(0.55, 0.64, 0.52, skin, 0, 2.46, 0);
+const hairCap = new THREE.Mesh(
+  new THREE.SphereGeometry(0.32, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.62),
+  hairMat,
+);
+hairCap.position.set(0, 2.59, 0.025);
+hero.add(hairCap);
+for (let i = 0; i < 19; i++) {
+  const a = i * 2.4,
+    r = 0.17 + (i % 3) * 0.045;
+  const spike = new THREE.Mesh(
+    new THREE.ConeGeometry(0.105, 0.3 + (i % 4) * 0.045, 5),
+    hairMat,
+  );
+  spike.position.set(Math.cos(a) * r, 2.77 + (i % 2) * 0.04, Math.sin(a) * r);
+  spike.rotation.set(Math.sin(a) * 0.65, 0, -Math.cos(a) * 0.65);
+  hero.add(spike);
+}
+const faceCanvas = document.createElement("canvas");
+faceCanvas.width = 512;
+faceCanvas.height = 256;
+const face = faceCanvas.getContext("2d");
+for (const x of [160, 352]) {
+  face.fillStyle = "#fff8e8";
+  face.beginPath();
+  face.ellipse(x, 112, 65, 48, 0, 0, 7);
+  face.fill();
+  face.strokeStyle = "#202939";
+  face.lineWidth = 12;
+  face.stroke();
+  face.fillStyle = "#ddb64e";
+  face.beginPath();
+  face.ellipse(x, 112, 26, 40, 0, 0, 7);
+  face.fill();
+  face.fillStyle = "#15202e";
+  face.beginPath();
+  face.ellipse(x, 112, 11, 32, 0, 0, 7);
+  face.fill();
+  face.fillStyle = "white";
+  face.beginPath();
+  face.arc(x - 10, 97, 9, 0, 7);
+  face.fill();
+  face.strokeStyle = "#193142";
+  face.lineWidth = 17;
+  face.beginPath();
+  face.moveTo(x - 67, 48);
+  face.lineTo(x + 60, 65);
+  face.stroke();
+}
+face.strokeStyle = "#995e4c";
+face.lineWidth = 7;
+face.beginPath();
+face.moveTo(232, 203);
+face.quadraticCurveTo(260, 215, 280, 200);
+face.stroke();
+const faceTex = new THREE.CanvasTexture(faceCanvas);
+faceTex.colorSpace = THREE.SRGBColorSpace;
+const faceMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.48, 0.29),
+  new THREE.MeshBasicMaterial({ map: faceTex, transparent: true }),
+);
+faceMesh.position.set(0, 2.46, -0.269);
+faceMesh.rotation.y = Math.PI;
+hero.add(faceMesh);
+const scarf = new THREE.Mesh(
+  new THREE.TorusGeometry(0.19, 0.085, 8, 18),
+  toon("#d55a41"),
+);
+scarf.rotation.x = Math.PI / 2;
+scarf.position.y = 2.12;
+hero.add(scarf);
+const tailCurve = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(0, 2.08, 0.1),
+  new THREE.Vector3(0.1, 1.95, 0.4),
+  new THREE.Vector3(0.28, 1.85, 0.75),
+  new THREE.Vector3(0.35, 1.95, 1),
+]);
+const scarfTail = new THREE.Mesh(
+  new THREE.TubeGeometry(tailCurve, 12, 0.07, 6, false),
+  toon("#d55a41"),
+);
+hero.add(scarfTail);
+for (const side of [-1, 1]) {
+  part(0.18, 0.22, 0.16, armor, side * 0.29, 1.1, -0.22);
+  part(0.08, 0.65, 0.5, green, side * 0.3, 1.65, 0);
+}
+
 part(0.055, 0.64, 0.48, green, 0, 1.6, 0);
 for (const side of [-1, 1]) {
   const plate = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 1), armor);
@@ -316,7 +438,10 @@ function disposeTransient(mesh) {
   });
 }
 function reset() {
-  for (const e of [...enemies, ...shots, ...effects]) disposeTransient(e.mesh);
+  for (const e of [...enemies, ...shots, ...effects]) {
+    if (e.warning) disposeTransient(e.warning);
+    disposeTransient(e.mesh);
+  }
   enemies.length = shots.length = effects.length = 0;
   state = {
     pos: new THREE.Vector3(39, 0, 39),
@@ -477,6 +602,10 @@ addEventListener("keydown", (e) => {
       toast("DRAGON STEP · ROOFTOP LEAP");
     } else toast("FACE A NEARBY BUILDING TO DRAGON STEP");
   }
+  if (k === "c" && state.dash <= 0) {
+    state.dash = 1.3;
+    sound(280, 0.15);
+  }
   if (k === " " && state.pos.y <= floorAt(state.pos) + 0.1)
     state.vy = keys.has("shift") ? 65 : 42;
   if (k === "r" && state.aura >= 100) {
@@ -507,7 +636,9 @@ function floorAt(p, previousY = p.y) {
 }
 function effect(pos, color, r = 1) {
   const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(r, 8, 6),
+    r >= 5
+      ? new THREE.TorusGeometry(r, 0.08, 8, 48)
+      : new THREE.SphereGeometry(r, 8, 6),
     new THREE.MeshBasicMaterial({
       color,
       transparent: true,
@@ -517,6 +648,11 @@ function effect(pos, color, r = 1) {
   );
   mesh.position.copy(pos);
   scene.add(mesh);
+  if (r >= 5) {
+    mesh.rotation.x = Math.PI / 2;
+    mesh.position.y += 0.15;
+    mesh.material.wireframe = false;
+  }
   effects.push({ mesh, life: 0.5 });
 }
 function finish(win) {
@@ -561,6 +697,10 @@ function update(dt) {
     );
   if (move.length() > 0) move.normalize();
   let speed = keys.has("shift") ? 25 : 13;
+  if (state.dash > 1) {
+    speed = 60;
+    if (move.length() === 0) move.copy(forward);
+  }
   const next = state.pos.clone().addScaledVector(move, speed * dt);
   let wall = buildings.find((b) => inside(b, next, 1) && state.pos.y < b.h);
   if (wall) {
@@ -676,7 +816,7 @@ function update(dt) {
           .distanceTo(s.mesh.position) < 1.5
       ) {
         e.hp -= s.p === 0 ? 32 : 24;
-        if (s.p === 2) e.freeze = 3;
+        if (s.p === 2) e.freeze = e.boss ? 0.6 : 3;
         if (s.p === 1) {
           state.hp = Math.min(100, state.hp + 4);
           e.mesh.position.addScaledVector(s.dir, 4);
@@ -705,6 +845,62 @@ function update(dt) {
       e.mesh.children[1].rotation.z += dt;
       $("#boss").style.display = "block";
       $("#bossHealth").style.width = Math.max(0, e.hp / 4) + "%";
+      e.attack -= dt;
+      const phase = e.hp <= 200 ? 2 : 1;
+      $("#bossPhase").textContent =
+        phase === 2 ? "PHASE II · UNBOUND" : "PHASE I · THE WARDEN";
+      if (phase === 2 && !e.enraged) {
+        e.enraged = true;
+        toast("THE WARDEN · AURA OVERLOAD");
+        radio("THE WARDEN", "No more holding back. Let the dragon burn!");
+        e.mesh.children[0].material.emissiveIntensity = 0.7;
+      }
+      if (e.attack <= 1 && !e.warning) {
+        e.warning = new THREE.Mesh(
+          new THREE.RingGeometry(5.8, 6.3, 48),
+          new THREE.MeshBasicMaterial({
+            color: phase === 2 ? 0xff3d72 : 0xffb54b,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.8,
+          }),
+        );
+        if (phase === 2) e.warning.scale.setScalar(1.3);
+        e.warning.rotation.x = -Math.PI / 2;
+        e.warning.position.set(state.pos.x, 0.12, state.pos.z);
+        scene.add(e.warning);
+        toast(
+          phase === 2
+            ? "AURA STRIKE · DODGE OR JUMP"
+            : "GROUND SLAM · GET OUT OF THE RING",
+        );
+      }
+      if (e.warning) {
+        e.warning.material.opacity = 0.35 + Math.sin(clock * 18) * 0.3;
+      }
+      if (e.attack <= 0) {
+        if (e.warning) {
+          const radius = phase === 2 ? 8 : 6;
+          if (
+            Math.hypot(
+              state.pos.x - e.warning.position.x,
+              state.pos.z - e.warning.position.z,
+            ) < radius &&
+            state.pos.y < 3 &&
+            state.dash < 0.95
+          ) {
+            state.hp -= phase === 2 ? 38 : 25;
+            shake = 0.5;
+          }
+          effect(e.warning.position, 0xff5577, radius);
+          e.warning.geometry.dispose();
+          e.warning.material.dispose();
+          scene.remove(e.warning);
+          e.warning = null;
+        }
+        sound(65, 0.35, "sawtooth");
+        e.attack = phase === 2 ? 2.2 : 3.5;
+      }
     }
     if (e.freeze <= 0 && targetDistance > 1.8) {
       const step = targetPosition.clone().sub(e.mesh.position);
@@ -721,7 +917,7 @@ function update(dt) {
           finish(false);
           toast("A WITNESS WAS LOST · STAY CLOSE TO PROTECT THEM");
         }
-      } else state.hp -= 15 * dt;
+      } else if (state.dash < 0.95) state.hp -= 15 * dt;
     }
     if (e.hp <= 0) {
       if (e.boss) {
@@ -737,6 +933,7 @@ function update(dt) {
   if (bossDefeated || !bossSpawned) $("#boss").style.display = "none";
   for (let i = enemies.length - 1; i >= 0; i--)
     if (enemies[i].hp <= 0) {
+      if (enemies[i].warning) disposeTransient(enemies[i].warning);
       disposeTransient(enemies[i].mesh);
       enemies.splice(i, 1);
     }
@@ -1068,7 +1265,7 @@ function spawnGuard(position, boss = false) {
   const mesh = new THREE.Group();
   const body = new THREE.Mesh(
     boss
-      ? new THREE.IcosahedronGeometry(2.4, 1)
+      ? new THREE.CapsuleGeometry(1.1, 1.7, 6, 12)
       : new THREE.CapsuleGeometry(0.5, 1, 4, 8),
     mat(boss ? "#4b2549" : "#513340", {
       emissive: boss ? "#7b164f" : "#280f20",
@@ -1087,7 +1284,49 @@ function spawnGuard(position, boss = false) {
   mesh.add(eye);
   mesh.position.copy(position);
   scene.add(mesh);
-  enemies.push({ mesh, hp: boss ? 400 : 65, freeze: 0, boss });
+  if (boss) {
+    const dark = toon("#312742"),
+      trim = toon("#9b465b");
+    for (const side of [-1, 1]) {
+      const shoulder = new THREE.Mesh(new THREE.ConeGeometry(0.9, 2, 5), trim);
+      shoulder.position.set(side * 2, 4.6, 0);
+      shoulder.rotation.z = -side * 0.5;
+      mesh.add(shoulder);
+      const arm = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.5, 1.5, 4, 8),
+        dark,
+      );
+      arm.position.set(side * 1.8, 2.8, 0);
+      mesh.add(arm);
+      const leg = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.55, 1.2, 4, 8),
+        dark,
+      );
+      leg.position.set(side * 0.8, 1, 0);
+      mesh.add(leg);
+    }
+    const helmet = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8, 1), trim);
+    helmet.position.y = 5.4;
+    mesh.add(helmet);
+    for (const side of [-1, 1]) {
+      const horn = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.5, 6), trim);
+      horn.position.set(side * 0.6, 6.2, 0);
+      horn.rotation.z = -side * 0.4;
+      mesh.add(horn);
+    }
+    const light = new THREE.PointLight(0xff4275, 15, 18);
+    light.position.y = 4;
+    mesh.add(light);
+  }
+  enemies.push({
+    mesh,
+    hp: boss ? 400 : 65,
+    freeze: 0,
+    boss,
+    attack: 3.5,
+    warning: null,
+    enraged: false,
+  });
 }
 function advanceMission() {
   mission++;
@@ -1197,6 +1436,30 @@ function updateStory(dt) {
     Math.round(state.pos.distanceTo(target)) +
     " m · CHAPTER ONE";
 }
+const outlineMat = new THREE.MeshBasicMaterial({
+  color: 0x09101a,
+  side: THREE.BackSide,
+});
+const heroMeshes = [];
+hero.traverse((o) => {
+  if (o.isMesh && !o.material.transparent) heroMeshes.push(o);
+});
+for (const mesh of heroMeshes) {
+  const outline = new THREE.Mesh(mesh.geometry, outlineMat);
+  outline.scale.setScalar(1.035);
+  mesh.add(outline);
+}
+$("#bossRush").onclick = () => {
+  $("#begin").onclick();
+  cinematic = 0;
+  mission = 6;
+  state.pos.set(39, 0, 39);
+  state.aura = 100;
+  checkpoint.visible = false;
+  bossSpawned = true;
+  spawnGuard(new THREE.Vector3(39, 0, 24), true);
+  radio("THE WARDEN", "Show me what that dragon aura can do, guardian.");
+};
 reset();
 let last = performance.now();
 function frame(t) {

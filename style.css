@@ -365,3 +365,5 @@ button:disabled {
 .in-cinematic .letterbox {
   height: 8vh;
 }
+
+#bossRush{display:block;margin-top:12px;width:310px;border-color:#ff6e88;background:#301c2a;color:#ffb7c5}#bossPhase{letter-spacing:3px}

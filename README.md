@@ -24,6 +24,7 @@ Open http://localhost:3000. Click **Enter the 3D City**. The opening camera sequ
 - Click / F: elemental attack with automatic targeting of nearby threats
 - 1 / 2 / 3: electricity for fast damage, water for healing and knockback, ice to freeze
 - R: aura blast when charged to 100
+- C: aura dodge with brief invulnerability and a cooldown
 - P: pause; M: mute/unmute synthesized audio
 
 ## Chapter One: First Response
@@ -37,3 +38,7 @@ Presentation includes an opening camera sequence, a rounded armored hero, textur
 `npm test` checks the HTTP server, local Three.js delivery, and private file protection. `npm run test:browser` runs Chromium story regression checks, including actual elemental combat and witness failure. On machines without Chromium, first run `npx playwright install chromium`; `CHROMIUM_PATH` can point to an existing installation. The browser test injects private controls into its own HTTP response to advance mission positions; those controls are not shipped to players. Three.js is served locally. No credentials, CDN, or external art assets are required; the optional Google font has a system fallback.
 
 If the game cannot load, it reports an error on the title screen. Stop the old server, run `git pull`, `npm ci`, and `npm start`, then hard-refresh your browser. Restarting the server is necessary when server routes change.
+
+## Anime and boss update
+
+Ultimateman now has an original anime-inspired face, spiky midnight-teal hair, amber eyes, cel shading, ink outlines, scarf, and black combat armor. The Warden encounter has telegraphed ground attacks and an aggressive second phase below half health. Jump clear of warning rings or press C to dodge just before impact. Ice slows the boss briefly instead of freezing it indefinitely. **Play Boss Battle** on the title screen starts the encounter immediately; the story campaign remains available.

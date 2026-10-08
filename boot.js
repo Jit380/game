@@ -22,6 +22,7 @@ async function load() {
     }
     await import("/game.js");
     button.disabled = false;
+    document.querySelector("#bossRush").disabled = false;
     button.innerHTML = "ENTER THE 3D CITY <span>→</span>";
   } catch (error) {
     console.error(error);

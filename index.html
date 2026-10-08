@@ -12,7 +12,7 @@
       <div class="brand">
         U<span>ULTIMATEMAN<small>DRAGON AWAKENING</small></span>
       </div>
-      <div class="district">SECTOR 07 <b> / </b> NEON MANHATTAN</div>
+      <div class="district">ANIME / BOSS UPDATE <b> / </b> NEON MANHATTAN</div>
       <button id="pause">PAUSE · P</button>
     </header>
     <aside id="hud">
@@ -38,7 +38,7 @@
       <p>
         WASD · MOVE &nbsp; MOUSE · CAMERA &nbsp; CLICK / F · ATTACK &nbsp; SPACE
         · JUMP / HOLD TO GLIDE &nbsp; SHIFT · SPRINT &nbsp; E · WALL GRIP &nbsp;
-        Q · ROOFTOP LEAP &nbsp; R · AURA &nbsp; M · AUDIO
+        Q · ROOFTOP LEAP &nbsp; C · DODGE &nbsp; R · AURA &nbsp; M · AUDIO
       </p>
     </footer>
     <div id="overlay">
@@ -56,6 +56,7 @@
           ><span>LIVE THE ORIGIN STORY</span>
         </div>
         <button id="begin">ENTER THE 3D CITY <span>→</span></button>
+        <button id="bossRush" disabled>PLAY BOSS BATTLE →</button>
         <p class="hint">
           Desktop keyboard + mouse recommended · playable prototype
         </p>
@@ -66,7 +67,7 @@
       <p id="dialogue"></p>
     </div>
     <div id="boss">
-      <small>THE WARDEN</small>
+      <small id="bossPhase">THE WARDEN</small>
       <div class="bar"><i id="bossHealth"></i></div>
     </div>
     <div id="toast"></div>

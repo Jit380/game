@@ -43,7 +43,12 @@ window.storyTest={
  target:()=>state.pos.copy(missionTargets[mission]),
  courier:()=>state.pos.copy(criminal.position),
  fight:()=>{select(2);keys.add('f');for(let i=0;i<800&&!ended;i++)update(.02);keys.delete('f')},
- away:()=>state.pos.set(39,0,300)
+ away:()=>state.pos.set(39,0,300),
+ bossAttack:()=>{const e=enemies.find(e=>e.boss);e.freeze=0;e.attack=.01;state.pos.copy(e.mesh.position).add(new THREE.Vector3(0,0,10));e.warning=new THREE.Mesh(new THREE.RingGeometry(5.8,6.3,20),new THREE.MeshBasicMaterial());e.warning.position.copy(state.pos);scene.add(e.warning);update(.02);},
+ health:()=>state.hp,
+ phaseTwo:()=>{enemies.find(e=>e.boss).hp=190;update(.02);},
+ face:()=>{hero.rotation.y=Math.PI;camera.position.set(state.pos.x,state.pos.y+2.5,state.pos.z+3);camera.lookAt(state.pos.clone().add(new THREE.Vector3(0,2,0)));renderer.render(scene,camera);}
+
 };`,
       }),
     );
@@ -161,9 +166,39 @@ window.storyTest={
       true,
       "witness loss ends chapter",
     );
+    await page.click("#bossRush");
+    assert.equal(
+      (await page.evaluate(() => storyTest.get())).mission,
+      6,
+      "direct boss mode",
+    );
+    const hp = await page.evaluate(() => storyTest.health());
+    await page.evaluate(() => storyTest.bossAttack());
+    assert.ok(
+      (await page.evaluate(() => storyTest.health())) < hp,
+      "slam damages inside warning",
+    );
+    const afterHit = await page.evaluate(() => storyTest.health());
+    await page.keyboard.press("c");
+    await page.evaluate(() => storyTest.bossAttack());
+    assert.equal(
+      await page.evaluate(() => storyTest.health()),
+      afterHit,
+      "dodge avoids slam",
+    );
+    await page.evaluate(() => storyTest.phaseTwo());
+    assert.match(
+      await page.locator("#bossPhase").textContent(),
+      /PHASE II/,
+      "boss enrages",
+    );
+    if (process.env.ANIME_CAPTURE) {
+      await page.evaluate(() => storyTest.face());
+      await page.screenshot({ path: process.env.ANIME_CAPTURE });
+    }
     assert.deepEqual(errors, [], "no browser runtime errors");
     console.log(
-      "Passed: keyboard movement, courier mission, elemental combat, witness rescue, transmitter, Warden fight, ending, rooftop leap, witness failure.",
+      "Passed: keyboard movement, courier mission, elemental combat, witness rescue, transmitter, Warden fight, ending, rooftop leap, witness failure, direct boss mode, ground strikes, dodge invulnerability, phase two.",
     );
   } finally {
     await browser?.close();
