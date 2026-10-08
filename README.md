@@ -1,19 +1,27 @@
-# Ultimateman: Dragon Awakening
+# Ultimateman: Dragon Awakening 3D
 
-An original browser action game prototype. Explore Neon Harbor in a black elemental suit, restore three dragon seals, and defeat 15 corrupted sentinels to complete the origin chapter.
+An original third-person WebGL action prototype in Neon Manhattan: a procedural New York inspired city district with high rises, avenues, a park, and rooftop dragon shrines. This is a prototype, not a recreation of Spider-Man PS4 or real NYC geography.
 
-## Run
+## Play
 
-Requires Node.js 20 or newer. No package installation or credentials are needed.
+Node.js 20+ and a desktop browser with WebGL and hardware acceleration are required.
 
 ```sh
+npm ci
 npm start
 ```
 
-Open the server on port 3000 in your local development browser. Run `npm test` for the HTTP smoke tests.
+Open http://localhost:3000 and click Enter the 3D City. Click the game to capture the mouse; Escape releases it.
 
-## Controls
+- WASD / arrows: move relative to camera
+- Mouse: orbit third-person camera
+- Click / F: shoot (automatically targets nearby sentinels)
+- Space: jump
+- Shift: sprint
+- E: toggle wall grip, then move into a building to climb to its roof
+- 1 / 2 / 3: electricity (damage), water (healing and knockback), ice (freeze)
+- R: unleash aura at 100; P: pause/resume
 
-WASD or arrow keys move; mouse aims; click shoots. Space attacks the nearest enemy. 1/2/3 select electricity (fast damage), water (knockback and healing), and ice (freeze). Shift dashes. E near a building toggles wall grip and rooftop traversal; press E again to descend. R unleashes dragon aura when its meter reaches 100. P pauses. Purple markers on the radar show the seals.
+Restore three purple rooftop dragon seals shown on the radar and defeat 15 sentinels. Seals heal you and charge aura. The current objective reports distance to the nearest remaining seal.
 
-This is a compact 2D gameplay prototype, not a full 3D open-world production. All characters, setting, graphics, and story are original. No external art assets are required. An optional Google font falls back to system fonts offline.
+Run `npm test` for HTTP checks. Three.js is served locally; no runtime CDN or credentials are needed. The optional font uses Google Fonts with a system fallback.
