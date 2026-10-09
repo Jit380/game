@@ -2,6 +2,8 @@ import * as THREE from "/vendor/three.module.js";
 import { Adventure, REGIONS, QUESTS } from "./core.mjs";
 import { createRegion } from "./world.js";
 import { createCharacter, animateCharacter } from "./characters.js";
+import { createVisuals } from "./visuals.js";
+import { EncounterDirector } from "./director.mjs";
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 export function createAdventure({ sound, onExit }) {
   const $ = (s) => document.querySelector(s),
@@ -13,48 +15,41 @@ export function createAdventure({ sound, onExit }) {
     preserveDrawingBuffer: true,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.16;
   const scene = new THREE.Scene(),
-    camera = new THREE.PerspectiveCamera(58, 1, 0.1, 360);
-  const hemi = new THREE.HemisphereLight("#d5edff", "#6d7051", 2.15);
-  scene.add(hemi);
-  const sun = new THREE.DirectionalLight("#fff0cf", 3.6);
-  sun.position.set(-35, 65, 25);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
-  Object.assign(sun.shadow.camera, {
-    left: -55,
-    right: 55,
-    top: 55,
-    bottom: -55,
-    near: 0.5,
-    far: 155,
-  });
-  sun.shadow.bias = -0.00035;
-  sun.shadow.normalBias = 0.055;
-  scene.add(sun, sun.target);
-  const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(250, 32, 16),
-    new THREE.ShaderMaterial({
-      side: THREE.BackSide,
-      depthWrite: false,
-      uniforms: {
-        top: { value: new THREE.Color("#5b9bcb") },
-        bottom: { value: new THREE.Color("#edf0d3") },
-      },
-      vertexShader:
-        "varying vec3 vPosition; void main(){vPosition=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
-      fragmentShader:
-        "uniform vec3 top;uniform vec3 bottom;varying vec3 vPosition;void main(){float h=clamp(normalize(vPosition).y*.8+.2,0.0,1.0);gl_FragColor=vec4(mix(bottom,top,h),1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}",
-    }),
-  );
-  scene.add(sky);
+    camera = new THREE.PerspectiveCamera(55, 1, 0.1, 360);
+  const visuals = createVisuals(renderer, scene, camera);
+  const director = new EncounterDirector();
+  const powerLight = new THREE.PointLight("#b8eaff", 0, 12, 2);
+  scene.add(powerLight);
+  const qualityOrder = ["cinematic", "balanced", "fast"];
+  let cinematicFrame = null,
+    cinematicEncounter = null,
+    cinematicClock = 0,
+    visualTime = 0,
+    impact = 0;
   let storage;
+  try {
+    const saved = localStorage.getItem("anime-brawl-visual-quality-v1");
+    visuals.setQuality(
+      qualityOrder.includes(saved)
+        ? saved
+        : matchMedia("(pointer:coarse)").matches
+          ? "balanced"
+          : "cinematic",
+    );
+  } catch {
+    visuals.setQuality("balanced");
+  }
+  renderer.setPixelRatio(
+    Math.min(
+      devicePixelRatio,
+      visuals.quality === "cinematic"
+        ? 1.6
+        : visuals.quality === "balanced"
+          ? 1.15
+          : 1,
+    ),
+  );
   try {
     storage = localStorage;
   } catch {}
@@ -72,7 +67,7 @@ export function createAdventure({ sound, onExit }) {
     overlayDone = null;
   let yaw = 0.38,
     pitch = 0.3,
-    distance = 8.5,
+    distance = 6.8,
     accumulator = 0,
     drag = null,
     pending = {},
@@ -93,17 +88,13 @@ export function createAdventure({ sound, onExit }) {
     scene,
     camera,
     world: null,
-  };
-  const up = (...codes) => codes.some((c) => keys.has(c));
-  const palette = {
-    leaf: { top: "#689cce", bottom: "#e9ead4", fog: "#c8dacc", sun: "#ffefca" },
-    namek: {
-      top: "#4bafad",
-      bottom: "#c6e9b2",
-      fog: "#a7d9c4",
-      sun: "#ebf5c5",
+    visuals,
+    director,
+    get cinematicFrame() {
+      return cinematicFrame;
     },
   };
+  const up = (...codes) => codes.some((c) => keys.has(c));
   function resize() {
     const w = viewport.clientWidth || 1280,
       h = viewport.clientHeight || 720;
@@ -111,6 +102,7 @@ export function createAdventure({ sound, onExit }) {
     lastWidth = w;
     lastHeight = h;
     renderer.setSize(w, h, false);
+    visuals.resize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
@@ -128,7 +120,16 @@ export function createAdventure({ sound, onExit }) {
           ? [o.material]
           : []) {
         materials.add(m);
-        if (m.map) textures.add(m.map);
+        for (const slot of [
+          "map",
+          "bumpMap",
+          "roughnessMap",
+          "normalMap",
+          "metalnessMap",
+          "emissiveMap",
+          "alphaMap",
+        ])
+          if (m[slot]) textures.add(m[slot]);
       }
     });
     geometries.forEach((g) => g.dispose());
@@ -147,6 +148,11 @@ export function createAdventure({ sound, onExit }) {
     x.font = "700 25px sans-serif";
     x.textAlign = "center";
     x.fillStyle = color;
+    if (x.measureText(text).width > 475)
+      x.font =
+        "700 " +
+        Math.max(12, Math.floor((25 * 475) / x.measureText(text).width)) +
+        "px sans-serif";
     x.fillText(text, 256, 58);
     const texture = new THREE.CanvasTexture(c);
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -178,7 +184,7 @@ export function createAdventure({ sound, onExit }) {
     )) {
       const mark = ring(q.x, q.z, 3.8, q.color);
       mark.userData.quest = q;
-      const title = label(q.name.toUpperCase() + " · E");
+      const title = label("INVESTIGATE · " + q.title.toUpperCase());
       title.position.y = 4.2;
       mark.add(title);
       const beacon = new THREE.Mesh(
@@ -261,19 +267,12 @@ export function createAdventure({ sound, onExit }) {
   function loadWorld() {
     unload();
     const game = controller.game,
-      id = game.region.id,
-      p = palette[id];
+      id = game.region.id;
     world = createRegion(scene, id);
     controller.world = world;
     loadedRegion = id;
     game.setWorld(world);
-    scene.background = new THREE.Color(p.fog);
-    scene.fog = new THREE.Fog(p.fog, 65, 190);
-    hemi.color.set(id === "leaf" ? "#c8e9ff" : "#c9f5ce");
-    hemi.groundColor.set(id === "leaf" ? "#777458" : "#5a7f65");
-    sun.color.set(p.sun);
-    sky.material.uniforms.top.value.set(p.top);
-    sky.material.uniforms.bottom.value.set(p.bottom);
+    visuals.setRegion(id);
     hero = createCharacter(game.hero);
     scene.add(hero);
     models.push(hero);
@@ -286,7 +285,6 @@ export function createAdventure({ sound, onExit }) {
     assist.visible = false;
     assist.traverse((o) => {
       if (o.isMesh) {
-        o.material = o.material.clone();
         o.material.transparent = true;
         o.material.opacity = 0.6;
       }
@@ -296,6 +294,7 @@ export function createAdventure({ sound, onExit }) {
     for (const q of QUESTS.filter((q) => q.region === id)) {
       const m = createCharacter(q.id);
       m.position.set(q.x, 0, q.z);
+      m.visible = false;
       m.rotation.y = Math.PI;
       scene.add(m);
       models.push(m);
@@ -320,10 +319,11 @@ export function createAdventure({ sound, onExit }) {
     for (const e of game.enemies || []) {
       if (e.hp <= 0) continue;
       const m = createCharacter(e.hero || game.hero);
+      const tinted = new Set();
       m.traverse((o) => {
-        if (o.isMesh) {
-          o.material = o.material.clone();
-          o.material.color?.lerp(new THREE.Color("#b895e6"), 0.45);
+        if (o.isMesh && !tinted.has(o.material)) {
+          tinted.add(o.material);
+          o.material.color?.lerp(new THREE.Color("#b895e6"), 0.3);
         }
       });
       scene.add(m);
@@ -343,7 +343,12 @@ export function createAdventure({ sound, onExit }) {
       .add(new THREE.Vector3(Math.sin(yaw) * 8, 3, Math.cos(yaw) * 8));
     camera.lookAt(target);
     resize();
-    renderer.render(scene, camera);
+    visuals.render(0, {
+      time: visualTime,
+      player: game.player,
+      combat: false,
+      impact,
+    });
   }
   function toast(text) {
     $("#adventure-toast").textContent = text;
@@ -396,6 +401,121 @@ export function createAdventure({ sound, onExit }) {
     overlayDone = next;
     next();
   }
+  function clearCinematic() {
+    if (director.active) director.skip();
+    cinematicFrame = null;
+    cinematicEncounter = null;
+    $("#adventure-cinematic").hidden = true;
+    viewport.classList.remove("cinematic");
+  }
+  function startCinematic(event) {
+    controller.state = "cinematic";
+    cinematicEncounter = event;
+    cinematicClock = performance.now();
+    keys.clear();
+    touch.clear();
+    pending = {};
+    accumulator = 0;
+    drag = null;
+    controller.game.player.vx = 0;
+    controller.game.player.vz = 0;
+    controller.game.player.yaw = Math.atan2(
+      event.quest.x - controller.game.player.x,
+      event.quest.z - controller.game.player.z,
+    );
+    if (document.pointerLockElement === canvas) document.exitPointerLock();
+    $("#adventure-overlay").hidden = true;
+    $("#adventure-cinematic").hidden = false;
+    viewport.classList.add("cinematic");
+    cinematicFrame = director.begin(event.quest.id, {
+      player: controller.game.player,
+      quest: event.quest,
+    });
+    renderCinematic();
+    sound(110, 0.6, "triangle", 0.022, 260);
+  }
+  function renderCinematic() {
+    const frame = cinematicFrame;
+    if (!frame) return;
+    for (const [id, value] of [
+      ["#adventure-scene-title", frame.title],
+      ["#adventure-scene-speaker", frame.speaker],
+      ["#adventure-scene-text", frame.text],
+    ]) {
+      const node = $(id);
+      if (node.textContent !== value) node.textContent = value;
+    }
+    $("#adventure-scene-progress").style.width =
+      (frame.time / frame.duration) * 100 + "%";
+    for (const cue of frame.cues || []) {
+      if (cue.kind === "dust")
+        dust(cue.x, cue.y || 0.2, cue.z, cue.color || "#bca987", 18);
+      else if (cue.kind === "rift") {
+        burst(cue.x, cue.y || 1, cue.z, cue.color || "#d3b4ff", 24);
+        impact = 0.35;
+      } else {
+        const wave = ring(
+          cue.x,
+          cue.z,
+          cue.radius || 2,
+          cue.color || "#deb99c",
+        );
+        scene.add(wave);
+        effects.push({ mesh: wave, life: 1.2, maxLife: 1.2, grow: true });
+        dust(cue.x, 0.1, cue.z, cue.color || "#cbb69b", 22);
+        impact = 0.55;
+      }
+      sound(
+        cue.kind === "rift" ? 340 : 70,
+        0.4,
+        "sawtooth",
+        0.02,
+        cue.kind === "rift" ? 1100 : 35,
+      );
+    }
+  }
+  function finishCinematic() {
+    const encounter = cinematicEncounter;
+    clearCinematic();
+    if (encounter) dialogue(encounter.lines, encounter.quest.title, resume);
+    else resume();
+  }
+  function updateQualityButton() {
+    $("#adventure-quality").textContent =
+      "VISUALS · " + visuals.quality.toUpperCase();
+    $("#adventure-quality").title =
+      "Change graphics quality: Cinematic, Balanced, Fast";
+  }
+  $("#adventure-quality").onclick = () => {
+    visuals.setQuality(
+      qualityOrder[
+        (qualityOrder.indexOf(visuals.quality) + 1) % qualityOrder.length
+      ],
+    );
+    renderer.setPixelRatio(
+      Math.min(
+        devicePixelRatio,
+        visuals.quality === "cinematic"
+          ? 1.6
+          : visuals.quality === "balanced"
+            ? 1.15
+            : 1,
+      ),
+    );
+    lastWidth = 0;
+    resize();
+    try {
+      localStorage.setItem("anime-brawl-visual-quality-v1", visuals.quality);
+    } catch {}
+    updateQualityButton();
+  };
+  $("#adventure-skip").onclick = () => {
+    if (controller.state === "cinematic") {
+      director.skip();
+      finishCinematic();
+    }
+  };
+  updateQualityButton();
   function map() {
     if (controller.game.currentBoss)
       return toast("Finish this encounter before traveling.");
@@ -458,7 +578,7 @@ export function createAdventure({ sound, onExit }) {
     const target = controller.game.nearInteract;
     if (!target)
       return toast(
-        "Approach a rival, camp, guide, or world gate. Follow the quest marker.",
+        "Approach a story disturbance, camp, guide, or world gate. Follow the quest marker.",
       );
     controller.game.interact();
     processEvents();
@@ -481,8 +601,14 @@ export function createAdventure({ sound, onExit }) {
   function burst(x, y, z, color, count = 15) {
     for (let i = 0; i < count; i++) {
       const m = new THREE.Mesh(
-        new THREE.SphereGeometry(0.08, 5, 4),
-        new THREE.MeshBasicMaterial({ color }),
+        new THREE.BoxGeometry(0.025, 0.12, 0.025),
+        new THREE.MeshBasicMaterial({
+          color: new THREE.Color(color).multiplyScalar(2),
+          transparent: true,
+          opacity: 1,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        }),
       );
       m.position.set(x, y, z);
       scene.add(m);
@@ -491,9 +617,41 @@ export function createAdventure({ sound, onExit }) {
         life: 0.5,
         maxLife: 0.5,
         velocity: new THREE.Vector3(
-          (Math.random() - 0.5) * 7,
-          Math.random() * 5,
-          (Math.random() - 0.5) * 7,
+          (Math.random() - 0.5) * 11,
+          Math.random() * 6,
+          (Math.random() - 0.5) * 11,
+        ),
+      });
+    }
+  }
+  function dust(x, y, z, color, count = 14) {
+    for (let i = 0; i < count; i++) {
+      const material = new THREE.MeshStandardMaterial({
+        color,
+        transparent: true,
+        opacity: 0.32,
+        roughness: 1,
+        depthWrite: false,
+      });
+      const mesh = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(0.18 + Math.random() * 0.2, 1),
+        material,
+      );
+      mesh.position.set(
+        x + (Math.random() - 0.5) * 2,
+        y,
+        z + (Math.random() - 0.5) * 2,
+      );
+      scene.add(mesh);
+      effects.push({
+        mesh,
+        life: 1.1 + Math.random() * 0.4,
+        maxLife: 1.5,
+        dust: true,
+        velocity: new THREE.Vector3(
+          (Math.random() - 0.5) * 4,
+          Math.random() * 2,
+          (Math.random() - 0.5) * 4,
         ),
       });
     }
@@ -516,26 +674,82 @@ export function createAdventure({ sound, onExit }) {
               );
     const direction = b.clone().sub(a),
       length = direction.length();
-    const mesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.16, 0.3, Math.max(0.2, length), 10),
-      new THREE.MeshBasicMaterial({
-        color: controller.game.hero === "goku" ? "#a1ecff" : "#8cd8ff",
-        transparent: true,
-        opacity: 0.85,
-      }),
-    );
-    mesh.position.copy(a).add(b).multiplyScalar(0.5);
-    mesh.quaternion.setFromUnitVectors(
-      new THREE.Vector3(0, 1, 0),
-      direction.normalize(),
-    );
+    direction.normalize();
+    const mesh = new THREE.Group(),
+      glow = (color) =>
+        new THREE.MeshBasicMaterial({
+          color: new THREE.Color(color).multiplyScalar(2.7),
+          transparent: true,
+          opacity: 0.65,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+    if (controller.game.hero === "naruto") {
+      mesh.position.copy(a).addScaledVector(direction, 0.9);
+      mesh.add(
+        new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), glow("#a0e7ff")),
+      );
+      for (let i = 0; i < 3; i++) {
+        const spiral = new THREE.Mesh(
+          new THREE.TorusGeometry(0.55 + i * 0.08, 0.018, 6, 32),
+          glow("#d5f8ff"),
+        );
+        spiral.rotation.set(i * 0.9, i * 1.3, i * 0.55);
+        mesh.add(spiral);
+      }
+      const trail = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.25, Math.max(0.2, length), 12),
+        glow("#88bfff"),
+      );
+      trail.position.copy(direction).multiplyScalar(length / 2);
+      trail.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction,
+      );
+      mesh.add(trail);
+    } else {
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+      mesh.add(
+        new THREE.Mesh(
+          new THREE.CylinderGeometry(0.17, 0.26, Math.max(0.2, length), 16),
+          glow("#e6faff"),
+        ),
+      );
+      mesh.add(
+        new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            0.32,
+            0.48,
+            Math.max(0.2, length),
+            16,
+            1,
+            true,
+          ),
+          glow("#61bcff"),
+        ),
+      );
+      for (const y of [-length / 2, length / 2]) {
+        const flare = new THREE.Mesh(
+          new THREE.SphereGeometry(0.55, 16, 12),
+          glow("#abebff"),
+        );
+        flare.position.y = y;
+        mesh.add(flare);
+      }
+    }
     scene.add(mesh);
-    effects.push({ mesh, life: 0.3, maxLife: 0.3 });
+    effects.push({
+      mesh,
+      life: 0.4,
+      maxLife: 0.4,
+      spin: controller.game.hero === "naruto",
+    });
   }
   function processEvents() {
     const g = controller.game;
     for (const e of g.events.splice(0)) {
-      if (e.type === "boss-start") dialogue(e.lines, e.quest.title, resume);
+      if (e.type === "boss-start") startCinematic(e);
       else if (e.type === "dialogue") dialogue(e.lines, e.name.toUpperCase());
       else if (e.type === "camp") camp();
       else if (e.type === "travel") {
@@ -605,6 +819,7 @@ export function createAdventure({ sound, onExit }) {
           e.z ?? g.currentBoss?.z ?? g.player.z,
           "#fff2ae",
         );
+        impact = Math.max(impact, 0.4);
         sound(140, 0.1, "sawtooth", 0.03, 45);
       } else if (e.type === "boss-phase") {
         toast(e.text || "PHASE TWO · WATCH THE DANGER ZONES");
@@ -612,11 +827,13 @@ export function createAdventure({ sound, onExit }) {
       } else if (e.type === "telegraph" || e.type === "enemy-telegraph")
         sound(420, 0.18, "triangle", 0.02, 150);
       else if (e.type === "boss-strike" || e.type === "enemy-strike") {
+        impact = Math.max(impact, 0.65);
         const m = ring(e.x, e.z, e.radius, e.color || "#ff8877");
         scene.add(m);
         effects.push({ mesh: m, life: 0.6, maxLife: 0.6, grow: true });
         burst(e.x, 0.2, e.z, e.color || "#ff937f", 20);
       } else if (e.type === "player-hit") {
+        impact = 0.8;
         burst(g.player.x, g.player.y + 1, g.player.z, "#ff8989", 10);
         sound(120, 0.13, "sawtooth", 0.025, 45);
       } else if (e.type === "jump" || e.type === "wall-jump")
@@ -624,6 +841,7 @@ export function createAdventure({ sound, onExit }) {
       else if (e.type === "riftbreak" || e.type === "rift") {
         toast("RIFTBREAK · COURAGE TRAVELS");
         sound(200, 0.5, "sawtooth", 0.035, 1200);
+        impact = 1;
         assist.userData.life = 0.8;
         burst(g.player.x, g.player.y + 1.2, g.player.z, "#a2ffe1", 30);
       } else if (e.type === "enemy-defeated") {
@@ -719,11 +937,13 @@ export function createAdventure({ sound, onExit }) {
   function draw(dt) {
     const g = controller.game,
       p = g.player;
-    world?.update(g.time);
+    visualTime += dt;
+    impact *= Math.exp(-6 * dt);
+    world?.update(visualTime);
     hero.position.set(p.x, p.y, p.z);
     hero.rotation.y = p.yaw;
     animateCharacter(hero, {
-      time: g.time,
+      time: visualTime,
       moving: Math.hypot(p.vx, p.vz) > 0.2,
       speed: Math.hypot(p.vx, p.vz) / 8,
       grounded: p.grounded,
@@ -731,14 +951,15 @@ export function createAdventure({ sound, onExit }) {
       guard: p.action === "guard",
       hurt: p.hurtTimer > 0,
     });
-    if (guide) animateCharacter(guide, { time: g.time, grounded: true });
+    if (guide) animateCharacter(guide, { time: visualTime, grounded: true });
     for (const q of QUESTS.filter((q) => q.region === g.region.id)) {
       const mesh = rivals.get(q.id),
         b = g.currentBoss?.id === q.id ? g.currentBoss : q;
+      mesh.visible = g.currentBoss?.id === q.id;
       mesh.position.set(b.x, b.y || 0, b.z);
       mesh.rotation.y = b.yaw ?? Math.atan2(p.x - b.x, p.z - b.z);
       animateCharacter(mesh, {
-        time: g.time,
+        time: visualTime,
         moving: b.action === "run",
         grounded: true,
         attack: b.attackTimer > 0,
@@ -753,7 +974,7 @@ export function createAdventure({ sound, onExit }) {
       m.position.set(enemy.x, enemy.y || 0, enemy.z);
       m.rotation.y = enemy.yaw || 0;
       animateCharacter(m, {
-        time: g.time,
+        time: visualTime,
         moving: enemy.action === "run",
         grounded: true,
         attack: enemy.action === "attack",
@@ -782,8 +1003,9 @@ export function createAdventure({ sound, onExit }) {
         mark.children[0].material.color.set(
           done ? "#8ef4c0" : next ? q.color : "#697983",
         );
+        mark.visible = next || done;
         mark.children[1].visible =
-          !g.currentBoss && Math.hypot(p.x - q.x, p.z - q.z) < 55;
+          next && !g.currentBoss && Math.hypot(p.x - q.x, p.z - q.z) < 55;
         mark.children[2].visible = next && !g.currentBoss;
       }
     }
@@ -824,7 +1046,7 @@ export function createAdventure({ sound, onExit }) {
       );
       assist.rotation.y = p.yaw;
       animateCharacter(assist, {
-        time: g.time,
+        time: visualTime,
         attack: true,
         grounded: p.grounded,
       });
@@ -832,12 +1054,23 @@ export function createAdventure({ sound, onExit }) {
     for (const e of effects) {
       e.life -= dt;
       if (e.velocity) {
-        e.velocity.y -= 12 * dt;
+        e.velocity.y -= (e.dust ? 1.5 : 12) * dt;
         e.mesh.position.addScaledVector(e.velocity, dt);
       }
       if (e.grow) e.mesh.scale.setScalar(1 + (e.maxLife - e.life) * 4);
+      if (e.spin) {
+        for (let i = 1; i < 4; i++)
+          e.mesh.children[i].rotation.z += dt * (5 + i);
+      }
+      if (!e.mesh.material)
+        e.mesh.traverse((o) => {
+          if (o.material?.transparent)
+            o.material.opacity = Math.max(0, e.life / e.maxLife) * 0.65;
+        });
       if (e.mesh.material?.transparent)
-        e.mesh.material.opacity = Math.max(0, e.life / e.maxLife);
+        e.mesh.material.opacity =
+          Math.max(0, e.life / e.maxLife) * (e.dust ? 0.32 : 1);
+      if (e.dust) e.mesh.scale.multiplyScalar(1 + dt * 0.65);
       e.mesh.scale.multiplyScalar(e.velocity ? 0.985 : 1);
     }
     effects = effects.filter((e) => {
@@ -862,6 +1095,8 @@ export function createAdventure({ sound, onExit }) {
       }
     }
     ideal.copy(tempTarget).addScaledVector(direction, d);
+    ideal.x += Math.cos(yaw) * 0.5;
+    ideal.z -= Math.sin(yaw) * 0.5;
     camera.position.lerp(ideal, 1 - Math.exp(-10 * dt));
     // Interpolation must also stay in front of nearby walls while turning.
     direction.copy(camera.position).sub(tempTarget);
@@ -878,16 +1113,59 @@ export function createAdventure({ sound, onExit }) {
     }
     camera.position.copy(tempTarget).addScaledVector(direction, d);
     camera.lookAt(tempTarget);
-    sky.position.copy(camera.position);
-    sun.position.set(p.x - 35, 65, p.z + 25);
-    sun.target.position.set(p.x, 0, p.z);
-    sun.target.updateMatrixWorld();
-    renderer.render(scene, camera);
+    if (controller.state === "cinematic" && cinematicFrame) {
+      const frame = cinematicFrame,
+        actor = rivals.get(director.id);
+      if (actor) {
+        actor.visible = frame.rival.visible;
+        actor.position.set(...frame.rival.position);
+        actor.rotation.y = frame.rival.yaw;
+        animateCharacter(actor, {
+          time: visualTime,
+          grounded: frame.rival.position[1] < 0.2,
+          moving: frame.rival.pose === "run",
+          attack: ["attack", "special"].includes(frame.rival.pose)
+            ? "special"
+            : false,
+          guard: frame.rival.pose === "charge",
+        });
+      }
+      camera.position.set(...frame.camera.position);
+      camera.lookAt(new THREE.Vector3(...frame.camera.target));
+    }
+    powerLight.position.set(
+      p.x + Math.sin(p.yaw) * 0.7,
+      p.y + 1.5,
+      p.z + Math.cos(p.yaw) * 0.7,
+    );
+    powerLight.intensity = Math.min(
+      16,
+      (p.specialTimer > 0 ? 12 : 0) + impact * 5,
+    );
+    const speed = Math.hypot(p.vx, p.vz),
+      fov =
+        controller.state === "cinematic"
+          ? 46
+          : 55 + Math.min(7, speed * 0.45) + (g.currentBoss ? 3 : 0);
+    if (Math.abs(camera.fov - fov) > 0.015) {
+      camera.fov += (fov - camera.fov) * (1 - Math.exp(-5 * dt));
+      camera.updateProjectionMatrix();
+    }
+    if (impact > 0.05 && controller.state !== "cinematic")
+      camera.position.y += Math.sin(visualTime * 48) * impact * 0.035;
+    visuals.render(dt, {
+      time: visualTime,
+      player: p,
+      combat: !!g.currentBoss,
+      cinematic: controller.state === "cinematic",
+      impact,
+    });
   }
   controller.start = () => {
     controller.game = new Adventure(storage);
     controller.active = true;
     controller.state = "exploring";
+    clearCinematic();
     $("#adventure").hidden = false;
     $("#adventure-overlay").hidden = true;
     keys.clear();
@@ -923,6 +1201,7 @@ export function createAdventure({ sound, onExit }) {
   controller.exit = () => {
     controller.game?.persist();
     controller.active = false;
+    clearCinematic();
     keys.clear();
     pending = {};
     touch.clear();
@@ -940,6 +1219,10 @@ export function createAdventure({ sound, onExit }) {
         accumulator -= 1 / 60;
         controller.game.update(1 / 60, { ...controls(), ...pending });
         pending = {};
+        if (controller.game.events.some((e) => e.type === "boss-start")) {
+          accumulator = 0;
+          break;
+        }
       }
       processEvents();
       if (
@@ -963,6 +1246,13 @@ export function createAdventure({ sound, onExit }) {
         );
       }
     } else accumulator = 0;
+    if (controller.state === "cinematic") {
+      const now = performance.now();
+      cinematicFrame = director.update((now - cinematicClock) / 1000);
+      cinematicClock = now;
+      renderCinematic();
+      if (cinematicFrame.done) finishCinematic();
+    }
     toastTime = Math.max(0, toastTime - dt);
     if (toastTime <= 0) $("#adventure-toast").hidden = true;
     draw(dt);
@@ -1076,6 +1366,14 @@ export function createAdventure({ sound, onExit }) {
     if (action) pending[action] = true;
     if (e.code === "KeyE" && controller.state === "exploring") interact();
     if (e.code === "KeyM" && controller.state === "exploring") map();
+    if (
+      controller.state === "cinematic" &&
+      ["Escape", "Enter"].includes(e.code)
+    ) {
+      director.skip();
+      finishCinematic();
+      return;
+    }
     if (e.code === "Escape") pause();
     if (e.code === "Enter" && controller.state === "dialogue") overlayDone?.();
   });

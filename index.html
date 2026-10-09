@@ -271,6 +271,9 @@
           <button id="adventure-exit" class="utility">← SAVE & EXIT</button
           ><span id="adventure-location">WORLDS COLLIDE · 3D</span>
           <div>
+            <button id="adventure-quality" class="utility">
+              VISUALS · CINEMATIC
+            </button>
             <button id="adventure-map" class="utility">WORLD MAP · M</button>
             <button id="adventure-pause" class="utility">PAUSE · ESC</button>
           </div>
@@ -300,6 +303,22 @@
             <span id="adventure-warning"></span>
           </div>
           <div id="adventure-toast" hidden role="status"></div>
+          <div
+            id="adventure-cinematic"
+            hidden
+            aria-label="Story encounter sequence"
+          >
+            <div class="cinematic-top">
+              <span>WORLDS COLLIDE</span
+              ><button id="adventure-skip">SKIP SCENE · ENTER</button>
+            </div>
+            <div class="cinematic-bottom" aria-live="polite">
+              <small id="adventure-scene-title"></small>
+              <strong id="adventure-scene-speaker"></strong>
+              <p id="adventure-scene-text"></p>
+              <div><i id="adventure-scene-progress"></i></div>
+            </div>
+          </div>
           <div class="adventure-compass">
             <span id="adventure-compass">N</span
             ><b id="adventure-rift">RIFTBREAK 0%</b

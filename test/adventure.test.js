@@ -294,3 +294,146 @@ test("bosses resist attacks during windups and expose a stronger counter window 
   step(a, 62);
   assert.equal(a.currentBoss.vulnerable, 0);
 });
+
+test("approaching the current predicament starts one ordered encounter without interacting", async () => {
+  const { Adventure } = await import("../adventure/core.mjs");
+  const a = new Adventure(storage());
+  Object.assign(a.player, { x: -48, y: 0, z: -40 });
+  step(a, 1);
+  assert.equal(a.currentBoss, null, "the later encounter cannot start first");
+  Object.assign(a.player, { x: 30, y: 0, z: -6 });
+  step(a, 1);
+  assert.equal(a.currentBoss, null, "outside the approach radius");
+  step(a, 8, { z: -1 });
+  assert.equal(a.currentBoss.id, "sasuke");
+  assert.equal(a.events.filter((e) => e.type === "boss-start").length, 1);
+  assert.equal(
+    a.events.find((e) => e.type === "boss-start").trigger,
+    "approach",
+  );
+  assert.ok(
+    a.events
+      .find((e) => e.type === "boss-start")
+      .predicament.includes("patrol"),
+  );
+  step(a, 10);
+  assert.equal(a.events.filter((e) => e.type === "boss-start").length, 1);
+  a.completeQuest("sasuke");
+  Object.assign(a.player, { x: 30, y: 0, z: -6 });
+  step(a, 1);
+  assert.equal(a.currentBoss, null, "the completed rival cannot restart");
+  Object.assign(a.player, { x: -48, y: 0, z: -36 });
+  step(a, 1);
+  assert.equal(a.currentBoss.id, "pain");
+  assert.equal(a.events.filter((e) => e.type === "boss-start").length, 2);
+});
+
+test("automatic encounters wait for ground-level landing instead of freezing a jump or rooftop", async () => {
+  const { Adventure } = await import("../adventure/core.mjs");
+  const a = new Adventure(storage());
+  Object.assign(a.player, { x: 30, y: 0, z: -8, grounded: true });
+  step(a, 1, { jump: true });
+  assert.equal(a.player.grounded, false);
+  assert.equal(a.currentBoss, null);
+  step(a, 20);
+  assert.ok(a.player.y > 1);
+  assert.equal(
+    a.currentBoss,
+    null,
+    "the hero remains free while airborne inside the encounter radius",
+  );
+  step(a, 45);
+  assert.equal(a.player.grounded, true);
+  assert.equal(a.currentBoss.id, "sasuke");
+  assert.equal(a.events.filter((e) => e.type === "boss-start").length, 1);
+
+  const roof = new Adventure(storage());
+  roof.setWorld({
+    spawn: { x: 30, y: 4, z: -8 },
+    platforms: [{ x: 30, z: -8, w: 4, d: 4, h: 4 }],
+  });
+  step(roof, 30);
+  assert.equal(roof.player.grounded, true);
+  assert.equal(roof.player.y, 4);
+  assert.equal(
+    roof.currentBoss,
+    null,
+    "standing on a roof cannot trigger the ground-level cinematic",
+  );
+});
+
+test("cinematic encounters use three authored shots, one-shot cues and exact combat landing positions", async () => {
+  const { EncounterDirector } = await import("../adventure/director.mjs");
+  const { QUESTS } = await import("../adventure/core.mjs");
+  for (const quest of QUESTS) {
+    const director = new EncounterDirector();
+    const context = { player: { x: quest.x, y: 0, z: quest.z + 12 }, quest };
+    const start = director.begin(quest.id, context);
+    assert.equal(start.shot, "setup");
+    assert.equal(start.rival.visible, false);
+    assert.equal(director.active, true);
+    assert.equal(director.id, quest.id);
+    const cues = [],
+      shots = new Set();
+    let end;
+    for (let i = 0; i < 73; i++) {
+      end = director.update(0.1);
+      shots.add(end.shot);
+      cues.push(...end.cues);
+      for (const point of [
+        end.camera.position,
+        end.camera.target,
+        end.rival.position,
+      ])
+        assert.ok(point.every(Number.isFinite));
+      assert.ok(end.text && end.title && end.speaker);
+    }
+    assert.equal(shots.size, 3);
+    assert.equal(end.done, true);
+    assert.equal(end.active, false);
+    assert.equal(end.rival.visible, true);
+    assert.deepEqual(end.rival.position, [quest.x, quest.y, quest.z]);
+    assert.ok(cues.length >= 3);
+    assert.ok(cues.some((c) => c.kind === "rift"));
+    assert.ok(
+      cues.every((c) => [c.x, c.y, c.z, c.radius].every(Number.isFinite)),
+    );
+    assert.deepEqual(
+      director.update(2).cues,
+      [],
+      "finished timelines cannot replay effects",
+    );
+  }
+});
+
+test("cinematic context is copied, seeking is deterministic and skipping suppresses queued effects", async () => {
+  const { EncounterDirector } = await import("../adventure/director.mjs");
+  const first = new EncounterDirector(),
+    second = new EncounterDirector();
+  const context = {
+    player: { x: 22, y: 0, z: -9 },
+    quest: { x: 30, y: 0, z: -20 },
+  };
+  first.begin("sasuke", context);
+  second.begin("sasuke", context);
+  const expected = second.update(3);
+  context.player.x = 9000;
+  context.quest.z = 9000;
+  const actual = first.update(3);
+  assert.deepEqual(actual.camera, expected.camera);
+  assert.deepEqual(actual.rival, expected.rival);
+  assert.deepEqual(actual.cues, expected.cues);
+  assert.deepEqual(
+    first.update(0).cues,
+    [],
+    "zero delta does not repeat earlier effects",
+  );
+  const end = first.skip();
+  assert.equal(end.done, true);
+  assert.equal(first.active, false);
+  assert.deepEqual(end.rival.position, [30, 0, -20]);
+  assert.deepEqual(end.cues, []);
+  assert.deepEqual(first.update(5).cues, []);
+  assert.equal(first.begin("missing", context), false);
+  assert.ok(first.update(Number.NaN).camera.position.every(Number.isFinite));
+});

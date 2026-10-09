@@ -22,6 +22,8 @@ test("delivers fighter menu, simulation, renderer, and styles", async () => {
     ["/adventure/core.mjs", "text/javascript", "class Adventure"],
     ["/adventure/world.js", "text/javascript", "createRegion"],
     ["/adventure/characters.js", "text/javascript", "createCharacter"],
+    ["/adventure/visuals.js", "text/javascript", "createVisuals"],
+    ["/adventure/director.mjs", "text/javascript", "EncounterDirector"],
     ["/vendor/three.module.js", "text/javascript", "REVISION"],
   ]) {
     const r = await fetch(base + file);

@@ -61,12 +61,13 @@ async function checkRendered(page, label, minimumWidth = 600) {
     `${label}: canvas size`,
   );
   assert.ok(pixels.colors > 35, `${label}: scene contains varied drawn pixels`);
-  assert.ok(pixels.lit > pixels.sampled * 0.7, `${label}: scene is visible`);
+  assert.ok(pixels.lit > pixels.sampled * 0.45, `${label}: graded scene is visible`);
   return pixels;
 }
 
 (async () => {
   let browser;
+  const errors = [];
   try {
     await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
     const base = "http://127.0.0.1:" + server.address().port;
@@ -85,7 +86,6 @@ async function checkRendered(page, label, minimumWidth = 600) {
     const page = await browser.newPage({
       viewport: { width: 1440, height: 1000 },
     });
-    const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {
       if (message.type() === "error")
@@ -105,6 +105,13 @@ async function checkRendered(page, label, minimumWidth = 600) {
         const state = await page.evaluate(
           () => window.gameModule.getAdventure().state,
         );
+        if (state === "cinematic") {
+          await page.evaluate(() => {
+            const button = document.querySelector("#adventure-skip");
+            if (window.gameModule.getAdventure().state === "cinematic") button.click();
+          });
+          continue;
+        }
         if (state !== "dialogue") return;
         await page.locator("#adventure-actions button").first().click();
       }
@@ -112,6 +119,58 @@ async function checkRendered(page, label, minimumWidth = 600) {
     };
     await dismissDialogue();
     await page.locator("#adventure:not([hidden])").waitFor();
+    const setQuality = async (quality) => {
+      for (let attempts = 0; attempts < 4; attempts++) {
+        if (await page.evaluate(
+          (quality) => window.gameModule.getAdventure().visuals.quality === quality,
+          quality,
+        )) break;
+        await page.click("#adventure-quality");
+      }
+      await page.waitForFunction(
+        (quality) => window.gameModule.getAdventure().visuals.info.quality === quality,
+        quality,
+      );
+      assert.match(await page.locator("#adventure-quality").textContent(),
+        new RegExp(quality, "i"), "quality button names the active preset");
+    };
+    await page.click("#adventure-pause");
+    const gameplaySnapshot = () => page.evaluate(() => {
+      const controller = window.gameModule.getAdventure();
+      const player = controller.game.player;
+      return {
+        state: controller.state,
+        hero: controller.game.hero,
+        region: controller.game.region.id,
+        progress: controller.game.progress,
+        player: { x: player.x, y: player.y, z: player.z, hp: player.hp, energy: player.energy },
+      };
+    });
+    const beforeQuality = await gameplaySnapshot();
+    const qualityInfo = {};
+    for (const quality of ["cinematic", "balanced", "fast"]) {
+      await setQuality(quality);
+      await checkRendered(page, quality + " preset");
+      qualityInfo[quality] = await page.evaluate(() =>
+        window.gameModule.getAdventure().visuals.info,
+      );
+      assert.deepEqual(await gameplaySnapshot(), beforeQuality,
+        "changing render quality preserves the paused character and story");
+      assert.ok(qualityInfo[quality].calls > 0 && qualityInfo[quality].triangles > 0,
+        "quality diagnostics describe an actual rendered scene");
+      assert.ok(qualityInfo[quality].pixelRatio > 0,
+        "quality diagnostics expose the active render scale");
+    }
+    assert.equal(qualityInfo.cinematic.effects.bloom, true);
+    assert.equal(qualityInfo.cinematic.effects.contactAO, true);
+    assert.equal(qualityInfo.fast.effects.contactAO, false);
+    assert.ok(qualityInfo.cinematic.passes.length > qualityInfo.fast.passes.length,
+      "cinematic quality adds real lighting and composite passes");
+    await setQuality("cinematic");
+    await page.locator("#adventure-actions button").first().click();
+    await checkRendered(page, "cinematic Leaf");
+    await capture(page, "worlds-collide-cinematic-leaf");
+    await setQuality("fast");
     await page.waitForTimeout(250);
     const leafPixels = await checkRendered(page, "Hidden Leaf");
     assert.equal(
@@ -429,28 +488,120 @@ async function checkRendered(page, label, minimumWidth = 600) {
           "travel renders another scene rather than the same village",
         );
         await capture(page, "worlds-collide-3d-namek");
+        await setQuality("cinematic");
+        await checkRendered(page, "cinematic Namek");
+        await capture(page, "worlds-collide-cinematic-namek");
+        await setQuality("fast");
       }
-      await page.evaluate((id) => {
-        const game = window.gameModule.getAdventure().game;
+      if (id === "sasuke") await setQuality("cinematic");
+      const approach = await page.evaluate((id) => {
+        const controller = window.gameModule.getAdventure();
+        const game = controller.game;
         const quest = game.nextQuest;
         if (quest?.id !== id) throw new Error(`Expected next quest ${id}`);
+        const actor = controller.scene.children.find((child) =>
+          child.userData.id === id &&
+          Math.hypot(child.position.x - quest.x, child.position.z - quest.z) < 1,
+        );
+        if (id === "sasuke") {
+          window.qaBossStartCount = 0;
+          window.qaOriginalBossStart = game.startBoss;
+          game.startBoss = function (...args) {
+            const started = window.qaOriginalBossStart.apply(this, args);
+            if (started) window.qaBossStartCount++;
+            return started;
+          };
+        }
         Object.assign(game.player, {
-          x: quest.x,
-          y: 0,
-          z: quest.z,
-          vx: 0,
-          vy: 0,
-          vz: 0,
-          grounded: true,
+          x: quest.x, y: 0, z: id === "sasuke" ? quest.z + 15 : quest.z,
+          vx: 0, vy: 0, vz: 0, grounded: true,
         });
+        return {
+          actorFound: !!actor,
+          actorVisible: !!actor?.visible,
+          camera: { x: controller.camera.position.x, y: controller.camera.position.y, z: controller.camera.position.z },
+        };
       }, id);
-      await page.keyboard.down("e");
+      assert.equal(approach.actorFound, true, `${id}: cinematic rival exists`);
+      assert.equal(approach.actorVisible, false,
+        `${id}: rival is hidden before the scripted arrival`);
+      if (id === "sasuke") {
+        assert.equal(
+          await page.evaluate(() => window.gameModule.getAdventure().game.currentBoss),
+          null,
+          "standing outside the approach radius does not start Sasuke",
+        );
+        await page.keyboard.down("w");
+      }
       await page.waitForFunction(
         (id) => window.gameModule.getAdventure().game.currentBoss?.id === id,
         id,
       );
-      await page.keyboard.up("e");
+      if (id === "sasuke") await page.keyboard.up("w");
+      await page.waitForFunction(
+        () => window.gameModule.getAdventure().state === "cinematic",
+      );
+      if (id === "sasuke") {
+        assert.equal(
+          await page.evaluate(() => window.gameModule.getAdventure().director.id),
+          id,
+          "approaching the crisis automatically starts the named intro without E",
+        );
+        const introTime = await page.evaluate(
+          () => window.gameModule.getAdventure().game.time,
+        );
+        await page.waitForFunction(
+          () => window.gameModule.getAdventure().cinematicFrame?.rival.visible,
+          null,
+          { timeout: 60000 },
+        );
+        const intro = await page.evaluate(() => {
+          const controller = window.gameModule.getAdventure();
+          return {
+            camera: { x: controller.camera.position.x, y: controller.camera.position.y, z: controller.camera.position.z },
+            time: controller.game.time,
+            text: document.querySelector("#adventure-cinematic").textContent,
+          };
+        });
+        assert.notDeepEqual(intro.camera, approach.camera,
+          "the entry sequence moves the actual scene camera");
+        assert.equal(intro.time, introTime,
+          "the entry sequence freezes combat while the crisis unfolds");
+        assert.ok(intro.text.trim().length > 30,
+          "the sequence displays its scene caption and subtitles");
+        await checkRendered(page, "Sasuke arrival cinematic");
+        await capture(page, "worlds-collide-cinematic-sasuke");
+      } else if (id === "pain") {
+        const openingHP = await page.evaluate(
+          () => window.gameModule.getAdventure().game.currentBoss.hp,
+        );
+        await page.waitForFunction(
+          () => window.gameModule.getAdventure().state === "dialogue",
+          null,
+          { timeout: 30000 },
+        );
+        assert.equal(
+          await page.evaluate(() => window.gameModule.getAdventure().game.currentBoss.hp),
+          openingHP,
+          "the entry scene completes naturally without combat running underneath",
+        );
+      }
       await dismissDialogue();
+      assert.equal(
+        await page.evaluate(() => window.gameModule.getAdventure().state),
+        "combat",
+        "skipping the entry scene and advancing dialogue hands control to combat",
+      );
+      if (id === "sasuke") {
+        assert.equal(await page.evaluate(() => window.qaBossStartCount), 1,
+          "one approach starts exactly one encounter");
+        await page.evaluate(() => {
+          window.gameModule.getAdventure().game.startBoss = window.qaOriginalBossStart;
+          delete window.qaOriginalBossStart;
+          delete window.qaBossStartCount;
+        });
+        await setQuality("fast");
+      }
       await page.evaluate(() => {
         const game = window.gameModule.getAdventure().game;
         const boss = game.currentBoss;
@@ -506,6 +657,10 @@ async function checkRendered(page, label, minimumWidth = 600) {
         );
         await checkRendered(page, "Broly encounter");
         await capture(page, "worlds-collide-3d-broly");
+        await setQuality("cinematic");
+        await checkRendered(page, "cinematic Broly encounter");
+        await capture(page, "worlds-collide-cinematic-broly");
+        await setQuality("fast");
         await page.evaluate(() => {
           const game = window.gameModule.getAdventure().game;
           game.player.energy = 100;
@@ -696,7 +851,9 @@ async function checkRendered(page, label, minimumWidth = 600) {
 
     assert.deepEqual(errors, [], "no JavaScript or browser console errors");
     console.log(
-      "3D story browser checks passed: actual WebGL scenes, WASD movement and jumping, camera wall collision, " +
+      "3D story browser checks passed: actual WebGL scenes, three render presets with stable story state, " +
+      "cinematic Leaf/Namek/boss rendering, automatic approach intro with moving camera, skip and natural dialogue handoffs, " +
+      "WASD movement and jumping, camera wall collision, " +
         "dialogue, fragments and camp upgrades, roaming echo removal, physical gates and atlas travel, " +
         "Naruto/Goku hero change, four boss attacks, " +
         "specials, second phase, Riftbreak, ending, exit and save reload, plus phone-sized WebGL, " +
@@ -705,6 +862,7 @@ async function checkRendered(page, label, minimumWidth = 600) {
         "received damage from actual keyboard combat.",
     );
   } finally {
+    if (errors.length) console.error("Captured browser errors:", errors);
     await browser?.close();
     await new Promise((resolve) => server.close(resolve));
   }

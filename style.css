@@ -1407,3 +1407,122 @@ button:disabled {
     max-width: 365px;
   }
 }
+
+#adventure-cinematic {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+#adventure-cinematic[hidden] {
+  display: none;
+}
+.cinematic-top {
+  height: 54px;
+  padding: 16px 24px;
+  background: #080d14f2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cinematic-top span {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #a4bbb9;
+}
+#adventure-skip {
+  pointer-events: auto;
+  background: transparent;
+  border: 1px solid #76817d88;
+  border-radius: 4px;
+  color: #e0e8e0;
+  font: 700 10px sans-serif;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.cinematic-bottom {
+  padding: 24px 40px 20px;
+  background: linear-gradient(transparent, #080d14e8 15%, #080d14);
+  min-height: 150px;
+}
+.cinematic-bottom small {
+  font: 700 10px sans-serif;
+  letter-spacing: 3px;
+  color: #dfb886;
+  display: block;
+}
+.cinematic-bottom strong {
+  display: block;
+  margin: 8px 0;
+  color: #ffefdc;
+  font:
+    800 25px "Barlow Condensed",
+    sans-serif;
+  letter-spacing: 1px;
+}
+.cinematic-bottom p {
+  max-width: 700px;
+  margin: 0 0 12px;
+  color: #dde5e5;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.cinematic-bottom > div {
+  height: 2px;
+  background: #344140;
+  width: 100%;
+}
+.cinematic-bottom i {
+  height: 100%;
+  display: block;
+  background: #ddc29e;
+}
+#adventure-viewport.cinematic .adventure-hud,
+#adventure-viewport.cinematic .adventure-compass,
+#adventure-viewport.cinematic #adventure-boss,
+#adventure-viewport.cinematic #adventure-toast {
+  visibility: hidden;
+}
+#adventure-quality {
+  min-width: 160px;
+}
+#adventure .match-top > div {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+@media (max-width: 700px) {
+  .cinematic-top {
+    height: 42px;
+    padding: 10px 14px;
+  }
+  .cinematic-top span {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  #adventure-skip {
+    font-size: 8px;
+    padding: 7px;
+  }
+  .cinematic-bottom {
+    padding: 20px;
+    min-height: 160px;
+  }
+  .cinematic-bottom strong {
+    font-size: 20px;
+  }
+  .cinematic-bottom p {
+    font-size: 12px;
+  }
+  #adventure-quality {
+    min-width: 0;
+    font-size: 8px;
+  }
+  #adventure .match-top > div {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

@@ -48,7 +48,10 @@ export const QUESTS = [
     y: 0,
     z: -20,
     title: "OLD BONDS",
-    objective: "Find Sasuke at the training grounds",
+    locationLabel: "Lost patrol signal",
+    objective: "Investigate the missing patrol's last signal",
+    predicament:
+      "A patrol flare dies at the training grounds. Something is wearing Naruto's chakra.",
     hp: 300,
     damage: 13,
     color: "#8989ff",
@@ -56,14 +59,17 @@ export const QUESTS = [
     intro: [
       [
         "Sasuke",
-        "That fracture is copying our memories. If you stand in my way, I will cut through you.",
+        "Three patrols vanished. The thing that took them was wearing your chakra.",
       ],
-      ["Naruto", "You are not fighting it alone. Show me what you have got."],
+      [
+        "Naruto",
+        "Then look at me. We break the false signal, not the village.",
+      ],
     ],
     outro: [
       [
         "Sasuke",
-        "There is someone else behind this. I felt their power answer yours.",
+        "The echoes were not you. Someone is copying two worlds. I can feel the other one.",
       ],
       ["Naruto", "Then I am going to find them. Stay with the village."],
     ],
@@ -76,16 +82,22 @@ export const QUESTS = [
     y: 0,
     z: -48,
     title: "THE VILLAGE THAT REMAINS",
-    objective: "Confront Pain beyond the village",
+    locationLabel: "Gravity tremor",
+    objective: "Reach the gravity tremor beyond the village",
+    predicament:
+      "The street rises beneath the evacuation route. A voice speaks from above the dust.",
     hp: 420,
     damage: 17,
     color: "#ff8973",
     ability: "ALMIGHTY PUSH",
     intro: [
-      ["Pain", "Your world breaks because it refuses to understand pain."],
+      [
+        "Pain",
+        "A world that forgets its pain will feel the weight of it again.",
+      ],
       [
         "Naruto",
-        "The village does not need another crater. It needs a future.",
+        "Kakashi is getting everyone clear. You are not taking another street from them.",
       ],
     ],
     outro: [
@@ -104,7 +116,10 @@ export const QUESTS = [
     y: 0,
     z: -30,
     title: "THE EMPEROR OF NOTHING",
-    objective: "Find Frieza on the eastern plain",
+    locationLabel: "Refugee distress call",
+    objective: "Answer Dende's distress call at the crashed transport",
+    predicament:
+      "A refugee transport falls silent. Above its wreckage, Frieza studies the new sky.",
     hp: 450,
     damage: 18,
     color: "#dc93ff",
@@ -112,9 +127,9 @@ export const QUESTS = [
     intro: [
       [
         "Frieza",
-        "A passage between worlds. Imagine how many planets I could own.",
+        "Your refugees found a passage between worlds. Imagine how many planets I could own.",
       ],
-      ["Goku", "Start with getting past me."],
+      ["Goku", "Dende, get the survivors out. Frieza, your road ends here."],
     ],
     outro: [
       ["Goku", "The rift is still growing. That enormous energy… Broly!"],
@@ -132,7 +147,10 @@ export const QUESTS = [
     y: 0,
     z: -55,
     title: "TWO WORLDS, ONE HEARTBEAT",
-    objective: "Free Broly from the rift",
+    locationLabel: "Seismic fracture",
+    objective: "Follow the seismic pulses and rescue Broly",
+    predicament:
+      "Each pulse splits the plain. Broly is trapped inside the fracture, fighting to escape.",
     hp: 600,
     damage: 21,
     color: "#a6ff72",
@@ -304,6 +322,7 @@ export class Adventure {
       return {
         ...this.nextQuest,
         type: "quest",
+        name: this.nextQuest.locationLabel,
         text: this.nextQuest.objective,
       };
     if (this.nextQuest)
@@ -517,7 +536,7 @@ export class Adventure {
     const target = this.nearInteract;
     if (!target) return false;
     if (target.type === "quest") {
-      this.startBoss(target.id);
+      this.startBoss(target.id, { trigger: "interact" });
       return target;
     }
     if (target.type === "camp") {
@@ -541,28 +560,28 @@ export class Adventure {
             ? [
                 "The violet fragments carry the power of both worlds. Bring them to camp.",
                 this.nextQuest?.id === "sasuke"
-                  ? "Sasuke is at the eastern training grounds. Follow the marker."
-                  : "Pain waits beyond the northwest district. Watch the ground when his power gathers.",
+                  ? "A patrol flare went dark at the eastern training grounds. Find out what happened."
+                  : "The evacuation road is lifting in the northwest district. Reach the tremor before it spreads.",
               ]
             : [
                 "Namek is answering the village on the other side. The worlds need both heroes.",
                 this.nextQuest?.id === "frieza"
-                  ? "Frieza waits on the eastern plain. His beams leave a warning before they strike."
-                  : "Broly is to the northwest. Move out of the green circles and free him.",
+                  ? "Our refugee transport crashed on the eastern plain. Please, follow its distress signal."
+                  : "The northwest fracture pulses with Broly's heartbeat. Reach him before it tears him apart.",
               ],
       });
     }
     return target;
   }
 
-  startBoss(id) {
+  startBoss(id, options = {}) {
     const quest = this.nextQuest;
     if (
       this.currentBoss ||
       !quest ||
       quest.id !== id ||
       quest.region !== this.region.id ||
-      distance(quest, this.player) > 7
+      distance(quest, this.player) > (options.automatic ? 13.5 : 7)
     )
       return false;
     this.currentBoss = {
@@ -583,7 +602,13 @@ export class Adventure {
     this.state = "combat";
     this.player.energy = this.maxEnergy;
     this.invincible = 1;
-    this.emit("boss-start", { id, quest, lines: quest.intro });
+    this.emit("boss-start", {
+      id,
+      quest,
+      lines: quest.intro,
+      predicament: quest.predicament,
+      trigger: options.automatic ? "approach" : options.trigger || "manual",
+    });
     return true;
   }
 
@@ -772,6 +797,16 @@ export class Adventure {
       interact: !!input.interact,
       rift: !!(input.rift || input.ultimate),
     };
+    const encounter = this.nextQuest;
+    if (
+      !this.currentBoss &&
+      this.state === "exploring" &&
+      encounter?.region === this.region.id &&
+      distance(encounter, p) <= 13.5 &&
+      p.grounded &&
+      Math.abs(p.y - encounter.y) <= 0.6
+    )
+      this.startBoss(encounter.id, { automatic: true });
   }
 
   moveHorizontal(actor, dx, dz) {

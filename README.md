@@ -19,22 +19,28 @@ The 3D mode requires WebGL 2. Enable hardware acceleration in your browser if it
 
 Walk through a full 3D Leaf Village with shops, trees, rooftops, a lookout tower, and the carved mountain monument. Travel through the world gate to Namek’s islands, dome houses, alien trees, and wreckage. Naruto explores the village; Goku explores Namek. Each region has free movement across both horizontal axes, solid buildings, reachable roofs, roaming rift echoes, guides, fragments, and a camp. The third-person camera follows the hero and can orbit or zoom.
 
-An original four-chapter crossover follows **Sasuke → Pain → Frieza → Broly**. Approach a rival and press E to begin the conversation and fight directly in the exploration world. Namek unlocks after Pain. Rivals telegraph attacks with red danger zones, change tactics in phase two, and leave a short opening after striking. Broly combines both worlds’ instability in the final encounter.
+An original four-chapter crossover follows **Sasuke → Pain → Frieza → Broly**. Investigate a missing patrol signal, reach a village evacuation tremor, answer a refugee transport’s distress call, and rescue Broly from a seismic fracture. Entering the current disturbance on foot starts a short three-shot scene: the crisis appears, the rival arrives, and dialogue leads into a fight directly in the exploration world. Rivals appear during their scenes instead of waiting at markers. Jumping and rooftop travel do not trigger a scene until you land. **Skip Scene**, Enter, or Escape advances to the dialogue; earned campaign progress stays saved.
 
-| 3D action                           | Controls                                      |
-| ----------------------------------- | --------------------------------------------- |
-| Move relative to the camera         | WASD / arrow keys                             |
-| Jump / double jump                  | Space                                         |
-| Climb against a wall                | Hold Space while moving into it; costs energy |
-| Sprint / evade                      | Hold Shift / press Shift                      |
-| Three-hit melee combo               | J or click the world                          |
-| Rasengan / Kamehameha               | K; costs energy                               |
-| Guard                               | Hold L; costs energy                          |
-| Talk, start a fight, rest, use gate | E nearby                                      |
-| Riftbreak ally assist               | R at 100% resonance                           |
-| Orbit / zoom camera                 | Drag / mouse wheel                            |
-| Optional mouse look                 | MOUSE LOOK button; Escape releases it         |
-| World atlas / pause                 | M / Escape                                    |
+Namek unlocks after Pain. Rivals telegraph attacks with red danger zones, change tactics in phase two, and leave a short opening after striking. Broly combines both worlds’ instability in the final encounter.
+
+The visual overhaul adds original character meshes with more natural proportions, layered hair, detailed clothing and equipment; weathered brick, wood, stone, fabric, and roof surfaces; leafy canopies and ground cover; rippled water; warmer Leaf lighting and cooler Namek atmosphere. Directional shadows, reflections, contact shading, subtle bloom, and filmic color accompany the closer third-person camera and luminous combat effects.
+
+Press **VISUALS** to cycle **Cinematic → Balanced → Fast**. Cinematic uses the full lighting/composite/bloom pipeline, Balanced reduces the passes and shadow resolution, and Fast renders directly with smaller shadows. The setting saves in this browser. Try Fast if your computer struggles, and allow the first frame of a new scene to finish loading. Devices without floating-point render targets use a simpler lighting fallback. The adventure uses locally generated art and textures; no runtime asset downloads are required.
+
+| 3D action                         | Controls                                        |
+| --------------------------------- | ----------------------------------------------- |
+| Move relative to the camera       | WASD / arrow keys                               |
+| Jump / double jump                | Space                                           |
+| Climb against a wall              | Hold Space while moving into it; costs energy   |
+| Sprint / evade                    | Hold Shift / press Shift                        |
+| Three-hit melee combo             | J or click the world                            |
+| Rasengan / Kamehameha             | K; costs energy                                 |
+| Guard                             | Hold L; costs energy                            |
+| Talk, investigate, rest, use gate | E nearby; story scenes also trigger on approach |
+| Riftbreak ally assist             | R at 100% resonance                             |
+| Orbit / zoom camera               | Drag / mouse wheel                              |
+| Optional mouse look               | MOUSE LOOK button; Escape releases it           |
+| World atlas / pause               | M / Escape                                      |
 
 Jump over low shockwaves, evade marked areas, and counter while **OPENING · STRIKE NOW** appears. Guarding reduces damage but consumes energy and prevents attacking. Riftbreak charges through combat, calls the other hero, interrupts a warning, and deals a heavy hit. Camps restore health and energy and sell three levels of Power, Vitality, and Energy, costing 3, 5, and 7 fragments. Roaming echoes grant one fragment each; story victories grant five. Defeat returns you to camp with earned progress preserved.
 
@@ -75,7 +81,7 @@ Hidden Leaf Village has rooftop platforms beneath a carved mountain monument. Na
 
 ## Development and tests
 
-The versus simulation lives in `engine.mjs`, drawings in `art.js`, browser flow/input in `game.js`, and the HTTP server in `server.js`. The 3D mode lives in `adventure/`: `core.mjs` handles simulation and saves, `client.js` handles camera and browser flow, `world.js` builds the regions, and `characters.js` builds articulated models. The 2D story uses `story.mjs`, `story-ui.js`, `story-art.js`, and `villains.js`. No bundler or build step is needed. Three.js 0.170.0 is served locally from its installed package; `ws` handles WebSockets, and Playwright is a development dependency. `multiplayer.cjs` runs authoritative room matches, and `tournament.mjs` manages the elimination bracket.
+The versus simulation lives in `engine.mjs`, drawings in `art.js`, browser flow/input in `game.js`, and the HTTP server in `server.js`. The 3D mode lives in `adventure/`: `core.mjs` handles simulation and saves, `client.js` handles camera and browser flow, `world.js` builds the regions, `characters.js` builds articulated models, `director.mjs` supplies encounter timelines, and `visuals.js` owns lighting and render passes. The 2D story uses `story.mjs`, `story-ui.js`, `story-art.js`, and `villains.js`. No bundler or build step is needed. Three.js 0.170.0 is served locally from its installed package; `ws` handles WebSockets, and Playwright is a development dependency. `multiplayer.cjs` runs authoritative room matches, and `tournament.mjs` manages the elimination bracket.
 
 ```sh
 npm test
@@ -96,7 +102,7 @@ Fonts are served locally; their SIL Open Font License notices are in `assets/fon
 
 On the same Wi-Fi, run `npm start` on one computer and have both players open `http://HOST_LAN_IP:3000` (replace HOST_LAN_IP with that computer’s LAN IPv4 address). Windows `ipconfig` shows it. Allow Node through the host firewall on your private network if prompted. Opening `localhost` on a different computer points to that different computer, so it cannot find the host’s rooms.
 
-For friends on different networks, deploy this Node server on a public host that supports WebSockets. Both players must use that shared URL. HTTPS automatically uses secure WebSockets; forwarding `/play` upgrades is required when using a reverse proxy. Static-only hosting such as GitHub Pages cannot run the multiplayer server. This update does not provision public hosting.
+For friends on different networks or tournament judges, use the public deployment instructions in [DEPLOY.md](DEPLOY.md). The included Render template deploys the Node server with WebSocket support; a hosting account is required to launch it and obtain its public URL. Both players must use that shared URL. HTTPS automatically uses secure WebSockets; forwarding `/play` upgrades is required when using a reverse proxy. Static-only hosting such as GitHub Pages cannot run the multiplayer server. Committing the template does not launch a public service.
 
 Rooms are private by code, hold two players, and expire after ten minutes if no opponent joins. They are held in memory, so restarting the server clears rooms. The server simulates at 60 Hz and sends state at 20 Hz; keyboard input is sent at 30 Hz. There is no account system, matchmaking, spectator mode, or rollback prediction. Low network latency gives the best feel. Online matches cannot be paused by one player.
 

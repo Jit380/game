@@ -1,0 +1,17 @@
+# Render Blueprint: run the HTTP game and /play WebSocket rooms in one service.
+# Deploy: https://render.com/deploy?repo=https://github.com/Jit380/game
+services:
+  - type: web
+    name: anime-brawl
+    runtime: node
+    repo: https://github.com/Jit380/game
+    branch: main
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "24.19.0"
+      - key: NODE_ENV
+        value: production

@@ -17,6 +17,8 @@ const files = {
   "/adventure/core.mjs": "adventure/core.mjs",
   "/adventure/world.js": "adventure/world.js",
   "/adventure/characters.js": "adventure/characters.js",
+  "/adventure/visuals.js": "adventure/visuals.js",
+  "/adventure/director.mjs": "adventure/director.mjs",
   "/style.css": "style.css",
   "/assets/fonts/barlow-condensed.ttf": "assets/fonts/barlow-condensed.ttf",
   "/assets/fonts/dm-sans.ttf": "assets/fonts/dm-sans.ttf",
